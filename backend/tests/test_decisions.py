@@ -103,7 +103,7 @@ def test_capacity_evicts_oldest_when_nothing_expired():
 def test_api_expired_id_returns_structured_410(monkeypatch):
     clock = FakeClock()
     store = VerificationStore(clock=clock)
-    monkeypatch.setattr("app.api.routes.correct.verification_store", store)
+    monkeypatch.setattr("app.api.dependencies.verification_store", store)
     vid = store.save(DEMO2, verify_steps(DEMO2))
     clock.now += 3601
     r = client.post("/api/v1/correct", json={"verification_id": vid, "mode": "FULL"})
