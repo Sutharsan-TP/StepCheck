@@ -67,11 +67,12 @@ def category_for(code: ErrorCode) -> ErrorCategory:
 class APIError(Exception):
     """A request-level failure returned as {"error": {"code", "message"}} with an HTTP status."""
 
-    def __init__(self, status_code: int, code: str, message: str):
+    def __init__(self, status_code: int, code: str, message: str, headers: dict[str, str] | None = None):
         super().__init__(message)
         self.status_code = status_code
         self.code = code
         self.message = message
+        self.headers = headers or {}
 
 
 class MathInputError(Exception):

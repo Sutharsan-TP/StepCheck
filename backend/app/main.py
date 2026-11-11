@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -12,6 +12,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.routes import correct, explain, transcribe, verify
 from app.config import settings
+from app.services.rate_limiter import rate_limit
 from app.utils.errors import APIError
 
 logger = logging.getLogger("stepcheck")
@@ -19,11 +20,13 @@ logger = logging.getLogger("stepcheck")
 API_PREFIX = "/api/v1"
 
 
-def _error(status: int, code: str, message: str, details: list | None = None) -> JSONResponse:
+def _error(
+    status: int, code: str, message: str, details: list | None = None, headers: dict | None = None
+) -> JSONResponse:
     body: dict = {"error": {"code": code, "message": message}}
     if details:
         body["error"]["details"] = details
-    return JSONResponse(status_code=status, content=body)
+    return JSONResponse(status_code=status, content=body, headers=headers)
 
 
 def create_app() -> FastAPI:
@@ -34,6 +37,7 @@ def create_app() -> FastAPI:
         allow_origins=settings.cors_origins,
         allow_methods=["GET", "POST"],
         allow_headers=["Content-Type"],
+        expose_headers=["Retry-After"],
     )
 
     @app.exception_handler(RequestValidationError)
@@ -46,7 +50,7 @@ def create_app() -> FastAPI:
 
     @app.exception_handler(APIError)
     async def _api_error(_: Request, exc: APIError) -> JSONResponse:
-        return _error(exc.status_code, exc.code, exc.message)
+        return _error(exc.status_code, exc.code, exc.message, headers=exc.headers)
 
     @app.exception_handler(StarletteHTTPException)
     async def _http_error(_: Request, exc: StarletteHTTPException) -> JSONResponse:
@@ -61,10 +65,13 @@ def create_app() -> FastAPI:
     def health() -> dict:
         return {"status": "healthy", "service": settings.service_name}
 
-    app.include_router(verify.router, prefix=API_PREFIX)
-    app.include_router(correct.router, prefix=API_PREFIX)
-    app.include_router(transcribe.router, prefix=API_PREFIX)
-    app.include_router(explain.router, prefix=API_PREFIX)
+    for router, bucket in (
+        (verify.router, "verify"),
+        (correct.router, "correct"),
+        (transcribe.router, "transcribe"),
+        (explain.router, "explain"),
+    ):
+        app.include_router(router, prefix=API_PREFIX, dependencies=[Depends(rate_limit(bucket))])
     return app
 
 

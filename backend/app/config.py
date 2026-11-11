@@ -27,6 +27,17 @@ class Settings:
     progress_token_secret: str = field(
         default_factory=lambda: os.getenv("PROGRESS_TOKEN_SECRET") or secrets.token_hex(32)
     )
+    # Per-client requests per minute (in-memory, per process).
+    rate_limits_per_minute: dict[str, int] = field(
+        default_factory=lambda: {
+            "transcribe": int(os.getenv("RATE_LIMIT_TRANSCRIBE_PER_MINUTE", "10")),
+            "explain": int(os.getenv("RATE_LIMIT_EXPLAIN_PER_MINUTE", "30")),
+            "verify": int(os.getenv("RATE_LIMIT_VERIFY_PER_MINUTE", "120")),
+            "correct": int(os.getenv("RATE_LIMIT_CORRECT_PER_MINUTE", "120")),
+        }
+    )
+    # Only behind a trusted reverse proxy (e.g. Render): use X-Forwarded-For for client IPs.
+    trust_proxy: bool = os.getenv("TRUST_PROXY", "false").lower() in ("1", "true", "yes")
     # OpenRouter. Model names are configuration only; none are hardcoded or assumed
     # to be free or vision-capable.
     openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY", "")

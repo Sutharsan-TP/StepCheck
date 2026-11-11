@@ -21,6 +21,19 @@ def solve():
     return solution_of
 
 
+@pytest.fixture(autouse=True)
+def _generous_rate_limits(monkeypatch):
+    """All test requests share one client IP; give each test fresh, large buckets.
+    test_rate_limiter.py installs its own tight limiters on top of this."""
+    from app.services import rate_limiter
+
+    monkeypatch.setattr(
+        rate_limiter,
+        "limiters",
+        {name: rate_limiter.TokenBucketLimiter(100_000) for name in rate_limiter.limiters},
+    )
+
+
 FINITE = SolutionKind.FINITE_SET
 EMPTY = SolutionKind.EMPTY
 ALL_REAL = SolutionKind.ALL_REAL
