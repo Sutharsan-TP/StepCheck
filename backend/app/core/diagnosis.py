@@ -15,7 +15,13 @@ import sympy as sp
 
 from app.core.equation_parser import X, Node
 from app.core.exact import is_zero, sign
-from app.core.forms import single_clause, side_texts, uses_plus_minus, zero_product_factors
+from app.core.forms import (
+    right_side_scale,
+    side_texts,
+    single_clause,
+    uses_plus_minus,
+    zero_product_factors,
+)
 from app.core.rendering import expr_text
 from app.core.types import Comparison, SolutionKind, StepAnalysis
 
@@ -261,6 +267,11 @@ def _categorise(prev: StepAnalysis, cur: StepAnalysis, cmp: Comparison):
         )
         return ErrorCategory.QUADRATIC_FORMULA_ERROR, None, None, detail
 
+    if quad and cur.solved_form:
+        if cmp.lost and not cmp.extraneous:
+            return ErrorCategory.INCOMPLETE_FINAL_ANSWER, None, None, None
+        return ErrorCategory.INCORRECT_FINAL_ANSWER, None, None, None
+
     p_clause, c_clause = single_clause(prev.statement), single_clause(cur.statement)
     if (
         p_clause
@@ -282,6 +293,15 @@ def _categorise(prev: StepAnalysis, cur: StepAnalysis, cmp: Comparison):
                 verb = "multiplied" if abs(sp.N(ratio)) >= 1 else "divided"
                 factor = expr_text(ratio if verb == "multiplied" else 1 / ratio)
                 detail = f"You {verb} the left-hand side by {factor}; do exactly the same to the right-hand side."
+                return ErrorCategory.MULTIPLICATION_DIVISION_ERROR, None, None, detail
+            ratio = right_side_scale(lp, lc, rp, rc)
+            if ratio is not None:
+                verb, base = ("multiplied", "multiply") if abs(sp.N(ratio)) >= 1 else ("divided", "divide")
+                factor = expr_text(ratio if verb == "multiplied" else 1 / ratio)
+                detail = (
+                    f"You {verb} the right-hand side by {factor}; {base} every term on the "
+                    "left-hand side by the same number."
+                )
                 return ErrorCategory.MULTIPLICATION_DIVISION_ERROR, None, None, detail
             cl, cr = _coefficients(d_left), _coefficients(d_right)
             if any(not is_zero(a) and is_zero(a + b) for a, b in zip(cl, cr)):

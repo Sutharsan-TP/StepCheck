@@ -75,6 +75,24 @@ def zero_product_factors(statement: ParsedStatement | None) -> list[sp.Expr] | N
     return None
 
 
+def right_side_scale(lp: sp.Expr, lc: sp.Expr, rp: sp.Expr, rc: sp.Expr) -> sp.Expr | None:
+    """Factor k if the right side was multiplied by k and the left's x-coefficient by the same k.
+
+    Recognises 'x/2 + 1 = 4 -> x + 1 = 8' (both sides meant to be doubled) without
+    mistaking '2x + 5 = 15 -> 2x = 20' for a multiplication.
+    """
+    rp, rc, lp, lc = (sp.expand(e) for e in (rp, rc, lp, lc))
+    if rp == 0 or rc == rp:
+        return None
+    k = sp.cancel(rc / rp)
+    if k.has(X) or is_zero(k):
+        return None
+    xp, xc = lp.coeff(X, 1), lc.coeff(X, 1)
+    if is_zero(xp) or not is_zero(xc - k * xp):
+        return None
+    return k
+
+
 def side_texts(clause: Clause) -> tuple[str, str]:
     return to_text(clause.lhs), to_text(clause.rhs)
 

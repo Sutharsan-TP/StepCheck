@@ -14,7 +14,7 @@ from enum import Enum
 
 import sympy as sp
 
-from app.core.equation_parser import X
+from app.core.equation_parser import X, node_to_sympy, to_text
 from app.core.equivalence_checker import compare
 from app.core.exact import is_zero, sign
 from app.core.first_error_detector import analyze_step
@@ -33,6 +33,7 @@ from app.core.rendering import (
     expr_text,
     factored_text,
     solved_text,
+    value_text,
 )
 from app.core.types import SolutionKind, StepAnalysis
 
@@ -317,6 +318,19 @@ def _linear_step(current: StepAnalysis, lhs: sp.Expr, rhs: sp.Expr) -> Generated
     )
 
 
+def _is_plain_value(clause) -> bool:
+    """True for 'x = 4', 'x = -3', 'x = 12.5', 'x = (5 - sqrt(13))/2'; False for 'x = 20/5'."""
+    lhs, rhs = clause.lhs.unwrap(), clause.rhs.unwrap()
+    value_node = rhs if lhs.kind == "var" else lhs if rhs.kind == "var" else None
+    if value_node is None:
+        return False  # constant equation such as 0 = 1
+    if value_node.kind == "num" or (value_node.kind == "neg" and value_node.children[0].kind == "num"):
+        return True
+    value = node_to_sympy(value_node)
+    written = compact(to_text(value_node))
+    return written in (compact(expr_text(value)), compact(value_text(value)))
+
+
 def next_step(current: StepAnalysis) -> GeneratedStep | None:
     """The canonical next step after a verified step, or None when it is final."""
     stmt = current.statement
@@ -334,10 +348,16 @@ def next_step(current: StepAnalysis) -> GeneratedStep | None:
             "Evaluate once with + and once with −.",
         )
     if stmt.solved_form:
-        # 'x = 2 or 0 = 1' style lines still need tidying into a plain answer.
-        has_const_clause = any(not c.lhs.contains_var() and not c.rhs.contains_var() for c in stmt.clauses)
-        return GeneratedStep(solved_text(target), Rule.STATE_SOLUTIONS, "State the solution set.",
-                             "State the solutions.", "List every solution.") if has_const_clause else None
+        # 'x = 20/5' or 'x = 2 or 0 = 1' still need tidying into a plain answer.
+        if all(_is_plain_value(c) for c in stmt.clauses):
+            return None
+        return GeneratedStep(
+            solved_text(target),
+            Rule.STATE_SOLUTIONS,
+            "Simplify the answer.",
+            "Can the answer be simplified further?",
+            "Work out the value on the right-hand side.",
+        )
     if len(stmt.clauses) > 1:
         return GeneratedStep(
             solved_text(target),

@@ -18,7 +18,14 @@ from app.core.equation_parser import X, to_text
 from app.core.equivalence_checker import compare
 from app.core.exact import is_zero, sign
 from app.core.first_error_detector import analyze_step, verify_steps
-from app.core.forms import compact, single_clause, uses_plus_minus, zero_product_factors
+from app.core.forms import (
+    compact,
+    is_constant_equation,
+    right_side_scale,
+    single_clause,
+    uses_plus_minus,
+    zero_product_factors,
+)
 from app.core.rendering import expr_text, factored_text, solved_text, sum_text
 from app.core.step_generator import (
     RULE_NAMES,
@@ -159,7 +166,7 @@ def _repair_candidates(prev: StepAnalysis, cur: StepAnalysis) -> list[GeneratedS
         a, b, c = quad.coeff(X, 2), quad.coeff(X, 1), quad.subs(X, 0)
         out.append(quadratic_formula_step(a, b, c))
 
-    if cur.solved_form:
+    if cur.solved_form and not is_constant_equation(cur.statement):
         count = len(prev_set.values)
         out.append(
             _step(
@@ -233,6 +240,19 @@ def _repair_candidates(prev: StepAnalysis, cur: StepAnalysis) -> list[GeneratedS
                         "must be multiplied by the same number.",
                     )
                 )
+        if d_right != 0:
+            ratio = right_side_scale(lp, lc, rp, rc)
+            if ratio is not None:
+                out.append(
+                    _step(
+                        f"{expr_text(sp.expand(ratio * lp))} = {r_text}",
+                        Rule.MULTIPLY_BOTH_SIDES,
+                        f"The right-hand side was multiplied by {expr_text(ratio)}, so every term on the "
+                        "left-hand side must be multiplied by the same number.",
+                    )
+                )
+        # Only keep the student's left side when that doesn't push x-terms onto a right side they had cleared.
+        if d_left != 0 and (rc.has(X) or not sp.expand(rp + d_left).has(X)):
             new_right = _shifted_side_text(sp.expand(rp), d_left)
             verb = f"subtract {expr_text(-d_left)}" if _leading_negative(d_left) else f"add {expr_text(d_left)}"
             out.append(
@@ -332,8 +352,12 @@ def correct_full(steps: list[str]) -> FullCorrection:
             k = result.first_error_step
             prev, cur = analyses[k - 2], analyses[k - 1]
             diag = diagnose(prev, cur, compare(prev.solution_set, cur.solution_set), k)
-            repaired, anchor = repair_step(prev, cur)
             prefix = [s.raw for s in result.steps[: k - 1] if s.status is StepStatus.VALID]
+            if _is_final(prev, result.correct_solution):
+                # Step k-1 already states the complete answer: the fix is to stop there.
+                anchor = prev
+            else:
+                repaired, anchor = repair_step(prev, cur)
         elif result.overall_status is OverallStatus.INCOMPLETE:
             anchor = analyses[-1]
             prefix = list(steps)
@@ -368,6 +392,13 @@ def correct_full(steps: list[str]) -> FullCorrection:
 
     if repaired:
         message = f"Step {result.first_error_step} was the first incorrect step. Here is a verified correction."
+        status = CorrectionStatus.CORRECTED
+    elif result.first_error_step is not None:
+        k = result.first_error_step
+        message = (
+            f"Step {k - 1} already states the complete answer; step {k} and everything after it "
+            "should be removed."
+        )
         status = CorrectionStatus.CORRECTED
     else:
         message = "Your steps are correct so far but the solution is unfinished. Here is a verified completion."
@@ -425,6 +456,15 @@ def correct_guided(
             prev, cur = analyses[k - 2], analyses[k - 1]
             diag = diagnose(prev, cur, compare(prev.solution_set, cur.solution_set), k)
             anchor = prev
+            if _is_final(prev, target):
+                return GuidedCorrection(
+                    GuidedStatus.SOLVED,
+                    f"Step {k - 1} already states the complete answer, so step {k} is not needed — "
+                    "your solution is complete without it.",
+                    phase="FIX_ERROR", first_error_step=k, error_step=steps[k - 1], current_step=prev.raw,
+                    step_number=k, error_category=diag.category, expected_rule=diag.expected_rule,
+                    explanation=diag.explanation, final_solution=prev.solution_set,
+                )
             expected, _ = repair_step(prev, cur)
             phase, step_number = "FIX_ERROR", k
         elif result.overall_status is OverallStatus.INCOMPLETE:
