@@ -27,11 +27,17 @@ class Settings:
     progress_token_secret: str = field(
         default_factory=lambda: os.getenv("PROGRESS_TOKEN_SECRET") or secrets.token_hex(32)
     )
-    # OpenRouter (used from Milestone 2; read here so config lives in one place)
+    # OpenRouter. Model names are configuration only; none are hardcoded or assumed
+    # to be free or vision-capable.
     openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY", "")
     openrouter_vision_model: str = os.getenv("OPENROUTER_VISION_MODEL", "")
     openrouter_text_model: str = os.getenv("OPENROUTER_TEXT_MODEL", "")
     openrouter_fallback_model: str = os.getenv("OPENROUTER_FALLBACK_MODEL", "")
+    openrouter_base_url: str = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+    openrouter_timeout_seconds: float = float(os.getenv("OPENROUTER_TIMEOUT_SECONDS", "30"))
+    openrouter_max_retries: int = int(os.getenv("OPENROUTER_MAX_RETRIES", "2"))
+    openrouter_app_title: str = os.getenv("OPENROUTER_APP_TITLE", "StepCheck")
+    openrouter_app_url: str = os.getenv("OPENROUTER_APP_URL", "")
 
 
 settings = Settings()
