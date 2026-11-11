@@ -268,7 +268,8 @@ def _syntax_error(exc: UnexpectedInput, text: str) -> MathInputError:
     where = f" near position {column}" if isinstance(column, int) and column > 0 else ""
     if isinstance(exc, UnexpectedToken):
         tok = exc.token
-        if tok.type == "EQUAL":
+        clauses = re.split(r",|\bor\b", text)
+        if tok.type == "EQUAL" and any(c.count("=") > 1 for c in clauses):
             return MathInputError(
                 ErrorCode.CHAINED_EQUALS, "Write one equation per step (only one '=' per equation)."
             )
@@ -322,7 +323,9 @@ def _to_ir(tree: Tree | Token, counter: _Counter, depth: int) -> Node:
     if kind == "sqrt_paren":
         return Node("sqrt", [_to_ir(kids[2], counter, depth + 1)], value="paren")
     if kind == "sqrt_bare":
-        return Node("sqrt", [_to_ir(kids[1], counter, depth + 1)], value="bare")
+        arg = _to_ir(kids[1], counter, depth + 1)
+        # "√(3)" is delimited; only "√3" can swallow a following factor ambiguously.
+        return Node("sqrt", [arg], value="paren" if arg.kind == "paren" else "bare")
     if kind in _BINARY:
         left = _to_ir(kids[0], counter, depth + 1)
         right = _to_ir(kids[2], counter, depth + 1)
