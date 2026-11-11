@@ -70,6 +70,7 @@ class TransitionOut(BaseModel):
 
 class VerifyResponse(BaseModel):
     request_id: str | None
+    verification_id: str
     overall_status: OverallStatus
     first_error_step: int | None
     steps: list[StepOut]
@@ -85,7 +86,9 @@ class VerifyResponse(BaseModel):
     extraneous_solutions: list[str] | None
 
     @staticmethod
-    def from_result(result: VerificationResult, request_id: str | None) -> "VerifyResponse":
+    def from_result(
+        result: VerificationResult, request_id: str | None, verification_id: str
+    ) -> "VerifyResponse":
         def strs(values) -> list[str] | None:
             return None if values is None else [sp.sstr(v) for v in values]
 
@@ -129,6 +132,7 @@ class VerifyResponse(BaseModel):
         c = result.completeness
         return VerifyResponse(
             request_id=request_id,
+            verification_id=verification_id,
             overall_status=result.overall_status,
             first_error_step=result.first_error_step,
             steps=steps,

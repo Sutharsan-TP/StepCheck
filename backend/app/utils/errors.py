@@ -64,6 +64,16 @@ def category_for(code: ErrorCode) -> ErrorCategory:
     return ErrorCategory.UNSUPPORTED if code in _UNSUPPORTED_CODES else ErrorCategory.NEEDS_REVIEW
 
 
+class APIError(Exception):
+    """A request-level failure returned as {"error": {"code", "message"}} with an HTTP status."""
+
+    def __init__(self, status_code: int, code: str, message: str):
+        super().__init__(message)
+        self.status_code = status_code
+        self.code = code
+        self.message = message
+
+
 class MathInputError(Exception):
     """Raised when a step cannot be verified. Never carries a stack trace to users."""
 

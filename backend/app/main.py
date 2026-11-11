@@ -10,8 +10,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.routes import verify
+from app.api.routes import correct, verify
 from app.config import settings
+from app.utils.errors import APIError
 
 logger = logging.getLogger("stepcheck")
 
@@ -43,6 +44,10 @@ def create_app() -> FastAPI:
         ]
         return _error(422, "INVALID_REQUEST", "The request is invalid.", details)
 
+    @app.exception_handler(APIError)
+    async def _api_error(_: Request, exc: APIError) -> JSONResponse:
+        return _error(exc.status_code, exc.code, exc.message)
+
     @app.exception_handler(StarletteHTTPException)
     async def _http_error(_: Request, exc: StarletteHTTPException) -> JSONResponse:
         return _error(exc.status_code, "HTTP_ERROR", str(exc.detail))
@@ -57,6 +62,7 @@ def create_app() -> FastAPI:
         return {"status": "healthy", "service": settings.service_name}
 
     app.include_router(verify.router, prefix=API_PREFIX)
+    app.include_router(correct.router, prefix=API_PREFIX)
     return app
 
 
