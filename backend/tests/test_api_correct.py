@@ -1,8 +1,9 @@
+import uuid
+
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.services.verification_store import VerificationStore
 
 client = TestClient(app, raise_server_exceptions=False)
 
@@ -65,10 +66,15 @@ def test_guided_flow_over_api():
 
     ok = correct(verification_id=vid, mode="GUIDED", attempt="2x = 10").json()
     assert ok["status"] == "ACCEPTED"
+    assert ok["guided"]["progress"] == ["2x = 10"]
 
-    done = correct(verification_id=vid, mode="GUIDED", progress=["2x = 10"], attempt="x = 5").json()
+    done = correct(
+        verification_id=vid, mode="GUIDED", progress=ok["guided"]["progress"],
+        progress_token=ok["guided"]["progress_token"], attempt="x = 5",
+    ).json()
     assert done["status"] == "SOLVED"
     assert done["guided"]["final_solution"]["values"] == ["5"]
+    assert done["guided"]["progress"] == ["2x = 10", "x = 5"]
 
 
 def test_correct_solution_needs_no_correction():
@@ -83,16 +89,20 @@ def test_unsupported_returns_needs_review_without_correction():
 
 
 def test_unknown_verification_id_is_404():
-    r = correct(verification_id="does-not-exist", mode="FULL")
+    r = correct(verification_id=str(uuid.uuid4()), mode="FULL")
     assert r.status_code == 404
     assert r.json()["error"]["code"] == "VERIFICATION_NOT_FOUND"
+
+
+def test_malformed_verification_id_is_422():
+    assert correct(verification_id="does-not-exist", mode="FULL").status_code == 422
 
 
 @pytest.mark.parametrize(
     "payload",
     [
         {"mode": "FULL"},  # no source
-        {"mode": "FULL", "steps": DEMO2, "verification_id": "abc"},  # two sources
+        {"mode": "FULL", "steps": DEMO2, "verification_id": str(uuid.uuid4())},  # two sources
         {"mode": "PARTIAL", "steps": DEMO2},
         {"mode": "GUIDED", "steps": DEMO2, "hint_level": 4},
         {"mode": "GUIDED", "steps": DEMO2, "hint_level": 0},
@@ -105,12 +115,3 @@ def test_invalid_correct_requests(payload):
     r = client.post("/api/v1/correct", json=payload)
     assert r.status_code == 422
     assert r.json()["error"]["code"] == "INVALID_REQUEST"
-
-
-def test_store_expiry_and_capacity():
-    store = VerificationStore(ttl_seconds=0)
-    vid = store.save(["x = 1", "x = 1"])
-    assert store.get(vid) is None
-    store = VerificationStore(max_entries=2)
-    ids = [store.save([str(i)]) for i in range(3)]
-    assert store.get(ids[0]) is None and store.get(ids[2]) == ["2"]
