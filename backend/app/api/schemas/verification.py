@@ -73,6 +73,7 @@ class VerifyResponse(BaseModel):
     verification_id: str
     overall_status: OverallStatus
     first_error_step: int | None
+    complete_answer_step: int | None
     steps: list[StepOut]
     transitions: list[TransitionOut]
     correct_solution: list[str] | None
@@ -135,6 +136,7 @@ class VerifyResponse(BaseModel):
             verification_id=verification_id,
             overall_status=result.overall_status,
             first_error_step=result.first_error_step,
+            complete_answer_step=result.complete_answer_step,
             steps=steps,
             transitions=transitions,
             correct_solution=result.correct_solution.value_strings() if result.correct_solution else None,

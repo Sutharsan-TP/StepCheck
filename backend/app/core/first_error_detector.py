@@ -56,6 +56,18 @@ def analyze_step(index: int, raw: str) -> StepAnalysis:
     return analysis
 
 
+def is_complete_answer(step: StepAnalysis, target: SolutionSet | None) -> bool:
+    """The single definition of 'this line is a complete final answer' used by the
+    verifier, the completeness checker and the correction engine: the step states
+    its solutions explicitly and they are exactly the original problem's solutions."""
+    return (
+        target is not None
+        and step.ok
+        and step.solved_form
+        and compare(target, step.solution_set).equivalent
+    )
+
+
 def _status_for_error(error: MathInputError) -> StepStatus:
     if error.category is ErrorCategory.UNSUPPORTED:
         return StepStatus.UNSUPPORTED
@@ -209,7 +221,18 @@ def verify_steps(steps: list[str]) -> VerificationResult:
         transitions=transitions,
         correct_solution=original.solution_set,
         completeness=completeness,
+        complete_answer_step=_first_complete_answer(step_results, original.solution_set),
     )
+
+
+def _first_complete_answer(step_results: list[StepResult], target: SolutionSet) -> int | None:
+    """Earliest step that completes the solution, provided every step up to it is VALID."""
+    for s in step_results:
+        if s.status is not StepStatus.VALID:
+            return None
+        if is_complete_answer(s.analysis, target):
+            return s.step
+    return None
 
 
 def check_completeness(correct: SolutionSet, final: StepAnalysis) -> CompletenessResult:
@@ -221,12 +244,13 @@ def check_completeness(correct: SolutionSet, final: StepAnalysis) -> Completenes
 
     submitted = final.solution_set
     cmp = compare(correct, submitted)
+    answer_correct = is_complete_answer(final, correct)  # the shared definition of "complete"
     if correct.kind is SolutionKind.ALL_REAL:
         # Every real number is a solution; any finite answer misses infinitely
         # many, so "missing" cannot be listed.
         complete = submitted.kind is SolutionKind.ALL_REAL
         return CompletenessResult(
-            FinalAnswerStatus.SOLVED, submitted, cmp.equivalent, complete,
+            FinalAnswerStatus.SOLVED, submitted, answer_correct, complete,
             () if complete else None, (), False,
         )
     if submitted.kind is SolutionKind.ALL_REAL:
@@ -236,7 +260,7 @@ def check_completeness(correct: SolutionSet, final: StepAnalysis) -> Completenes
     return CompletenessResult(
         final_answer_status=FinalAnswerStatus.SOLVED,
         submitted=submitted,
-        final_answer_correct=cmp.equivalent,
+        final_answer_correct=answer_correct,
         solution_complete=not cmp.lost,
         missing=cmp.lost,
         extraneous=cmp.extraneous,

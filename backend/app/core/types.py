@@ -145,4 +145,5 @@ class VerificationResult:
     transitions: list[TransitionResult]
     correct_solution: SolutionSet | None
     completeness: CompletenessResult
+    complete_answer_step: int | None = None  # earliest step stating the full answer (all prior valid)
     notes: list[str] = field(default_factory=list)

@@ -17,7 +17,7 @@ from app.core.diagnosis import Diagnosis, ErrorCategory, diagnose
 from app.core.equation_parser import X, to_text
 from app.core.equivalence_checker import compare
 from app.core.exact import is_zero, sign
-from app.core.first_error_detector import analyze_step, verify_steps
+from app.core.first_error_detector import analyze_step, is_complete_answer, verify_steps
 from app.core.forms import (
     compact,
     is_constant_equation,
@@ -68,8 +68,25 @@ class GuidedStatus(str, Enum):
     REJECTED = "REJECTED"
     ATTEMPT_UNREADABLE = "ATTEMPT_UNREADABLE"
     SOLVED = "SOLVED"
+    ALREADY_COMPLETE = "ALREADY_COMPLETE"
     NO_CORRECTION_NEEDED = "NO_CORRECTION_NEEDED"
     NEEDS_REVIEW = "NEEDS_REVIEW"
+
+
+class CorrectionAction(str, Enum):
+    NONE = "NONE"
+    REPLACE_STEP = "REPLACE_STEP"  # fix the first invalid step, then continue
+    COMPLETE_SOLUTION = "COMPLETE_SOLUTION"  # all valid but unfinished: continue
+    REMOVE_REMAINING_STEPS = "REMOVE_REMAINING_STEPS"  # answer already complete: drop later steps
+
+
+class InvalidProgress(Exception):
+    """Client-submitted guided progress failed re-verification (request-level error)."""
+
+    def __init__(self, index: int, message: str):
+        super().__init__(message)
+        self.index = index
+        self.message = message
 
 
 class StepSource(str, Enum):
@@ -90,10 +107,22 @@ class CorrectionStep:
 
 
 @dataclass
+class RemovedStep:
+    step_number: int
+    text: str
+    status: StepStatus
+    kind: str  # INCORRECT | UNNECESSARY | UNVERIFIABLE
+    reason: str
+
+
+@dataclass
 class FullCorrection:
     status: CorrectionStatus
     message: str
+    action: CorrectionAction = CorrectionAction.NONE
     first_error_step: int | None = None
+    complete_answer_step: int | None = None
+    removed_steps: list[RemovedStep] = field(default_factory=list)
     original_step: str | None = None
     diagnosis: Diagnosis | None = None
     corrected_step: CorrectionStep | None = None
@@ -133,6 +162,9 @@ class GuidedCorrection:
     revealed_explanation: str | None = None
     attempt_feedback: AttemptFeedback | None = None
     final_solution: SolutionSet | None = None
+    progress: list[str] = field(default_factory=list)  # server-verified accepted steps
+    complete_answer_step: int | None = None
+    removed_steps: list[RemovedStep] = field(default_factory=list)
 
 
 # ----------------------------------------------------------------------- repair
@@ -339,10 +371,62 @@ def _unverifiable_message(result: VerificationResult) -> str:
     return "Some steps could not be verified, so StepCheck cannot safely suggest a correction."
 
 
+def _removed_steps(result: VerificationResult, complete_at: int) -> list[RemovedStep]:
+    removed = []
+    for s in result.steps[complete_at:]:
+        if s.status is StepStatus.FIRST_INVALID:
+            kind, reason = "INCORRECT", "This step changes the solutions of the equation."
+        elif s.status is StepStatus.DOWNSTREAM_DEPENDENT:
+            kind, reason = "INCORRECT", f"This step depends on the incorrect step {result.first_error_step}."
+        elif s.status is StepStatus.VALID:
+            kind, reason = "UNNECESSARY", "This step is valid but the answer was already complete."
+        else:
+            kind, reason = "UNVERIFIABLE", "This step could not be verified and is not needed."
+        removed.append(RemovedStep(s.step, s.raw, s.status, kind, reason))
+    return removed
+
+
+def _already_complete_message(result: VerificationResult, complete_at: int) -> str:
+    n = len(result.steps)
+    later = f"step {n} — it is" if n == complete_at + 1 else f"steps {complete_at + 1}–{n} — they are"
+    return (
+        f"Your solution was already complete at step {complete_at} ({solved_text(result.correct_solution)}). "
+        f"Remove {later} not needed."
+    )
+
+
+def _remove_remaining(steps: list[str], result: VerificationResult, complete_at: int) -> FullCorrection:
+    """Decision 3: a complete answer was reached before a later invalid or unnecessary step."""
+    kept = steps[:complete_at]
+    check = verify_steps(kept)
+    if check.overall_status is not OverallStatus.CORRECT:  # cannot happen if the definitions agree
+        return FullCorrection(CorrectionStatus.NEEDS_REVIEW, _UNSAFE_MESSAGE)
+    diag = None
+    k = result.first_error_step
+    if k is not None:
+        prev, cur = result.steps[k - 2].analysis, result.steps[k - 1].analysis
+        diag = diagnose(prev, cur, compare(prev.solution_set, cur.solution_set), k)
+    return FullCorrection(
+        status=CorrectionStatus.CORRECTED,
+        message=_already_complete_message(result, complete_at),
+        action=CorrectionAction.REMOVE_REMAINING_STEPS,
+        first_error_step=k,
+        original_step=steps[k - 1] if k else None,
+        complete_answer_step=complete_at,
+        removed_steps=_removed_steps(result, complete_at),
+        diagnosis=diag,
+        corrected_solution=[_as_step(i + 1, t, StepSource.STUDENT) for i, t in enumerate(kept)],
+        final_solution=check.completeness.submitted,
+        verification=check,
+    )
+
+
 def correct_full(steps: list[str]) -> FullCorrection:
     result = verify_steps(steps)
     if result.overall_status is OverallStatus.CORRECT:
         return FullCorrection(CorrectionStatus.NO_CORRECTION_NEEDED, "Every step is valid and the answer is complete.")
+    if result.complete_answer_step is not None:
+        return _remove_remaining(steps, result, result.complete_answer_step)
 
     analyses = [s.analysis for s in result.steps]
     diag: Diagnosis | None = None
@@ -353,11 +437,7 @@ def correct_full(steps: list[str]) -> FullCorrection:
             prev, cur = analyses[k - 2], analyses[k - 1]
             diag = diagnose(prev, cur, compare(prev.solution_set, cur.solution_set), k)
             prefix = [s.raw for s in result.steps[: k - 1] if s.status is StepStatus.VALID]
-            if _is_final(prev, result.correct_solution):
-                # Step k-1 already states the complete answer: the fix is to stop there.
-                anchor = prev
-            else:
-                repaired, anchor = repair_step(prev, cur)
+            repaired, anchor = repair_step(prev, cur)
         elif result.overall_status is OverallStatus.INCOMPLETE:
             anchor = analyses[-1]
             prefix = list(steps)
@@ -392,22 +472,17 @@ def correct_full(steps: list[str]) -> FullCorrection:
 
     if repaired:
         message = f"Step {result.first_error_step} was the first incorrect step. Here is a verified correction."
-        status = CorrectionStatus.CORRECTED
-    elif result.first_error_step is not None:
-        k = result.first_error_step
-        message = (
-            f"Step {k - 1} already states the complete answer; step {k} and everything after it "
-            "should be removed."
-        )
-        status = CorrectionStatus.CORRECTED
+        status, action = CorrectionStatus.CORRECTED, CorrectionAction.REPLACE_STEP
     else:
         message = "Your steps are correct so far but the solution is unfinished. Here is a verified completion."
-        status = CorrectionStatus.COMPLETED
+        status, action = CorrectionStatus.COMPLETED, CorrectionAction.COMPLETE_SOLUTION
     return FullCorrection(
         status=status,
         message=message,
+        action=action,
         first_error_step=result.first_error_step,
         original_step=steps[result.first_error_step - 1] if result.first_error_step else None,
+        complete_answer_step=check.complete_answer_step,
         diagnosis=diag,
         corrected_step=corrected_step,
         continuation=generated,
@@ -420,19 +495,31 @@ def correct_full(steps: list[str]) -> FullCorrection:
 # ----------------------------------------------------------------------- GUIDED
 
 
-def _is_final(step: StepAnalysis, target: SolutionSet) -> bool:
-    return (
-        step.ok
-        and step.solved_form
-        and next_step(step) is None
-        and compare(target, step.solution_set).equivalent
-    )
-
-
 def _hint_for(level: int, hints: tuple[str, str], expected: GeneratedStep) -> tuple[str, bool]:
     if level >= MAX_HINT_LEVEL:
         return f"The next step is: {expected.text}", True
     return hints[min(level, 2) - 1], False
+
+
+def _reject_progress(progress: list[str], reason: str) -> None:
+    if progress:
+        raise InvalidProgress(0, f"Guided progress is not allowed here: {reason}")
+
+
+def _replay_progress(anchor: StepAnalysis, progress: list[str], first_number: int, target: SolutionSet) -> StepAnalysis:
+    """Re-verify every previously accepted step; the client's word is never trusted."""
+    for i, text in enumerate(progress):
+        if is_complete_answer(anchor, target) and i > 0:
+            raise InvalidProgress(i, f"Progress step {i + 1} comes after the solution was already complete.")
+        step = analyze_step(first_number + i, text)
+        if not step.ok:
+            raise InvalidProgress(i, f"Progress step {i + 1} could not be read: {step.error.message}")
+        if not compare(anchor.solution_set, step.solution_set).equivalent:
+            raise InvalidProgress(i, f"Progress step {i + 1} is not a valid transformation of the step before it.")
+        if compact(step.raw) == compact(anchor.raw):
+            raise InvalidProgress(i, f"Progress step {i + 1} repeats the previous step.")
+        anchor = step
+    return anchor
 
 
 def correct_guided(
@@ -441,48 +528,45 @@ def correct_guided(
     attempt: str | None = None,
     hint_level: int = 1,
 ) -> GuidedCorrection:
-    progress = progress or []
+    """Raises InvalidProgress when the submitted progress is not a verified continuation."""
+    progress = list(progress or [])
     hint_level = max(1, min(MAX_HINT_LEVEL, hint_level))
     result = verify_steps(steps)
     if result.overall_status is OverallStatus.CORRECT:
+        _reject_progress(progress, "the submitted solution is already correct.")
         return GuidedCorrection(GuidedStatus.NO_CORRECTION_NEEDED, "Every step is valid and the answer is complete.")
+    if result.complete_answer_step is not None:
+        _reject_progress(progress, "the submitted solution was already complete.")
+        c = result.complete_answer_step
+        return GuidedCorrection(
+            GuidedStatus.ALREADY_COMPLETE,
+            _already_complete_message(result, c),
+            first_error_step=result.first_error_step,
+            current_step=steps[c - 1],
+            complete_answer_step=c,
+            removed_steps=_removed_steps(result, c),
+            final_solution=result.correct_solution,
+        )
 
     analyses = [s.analysis for s in result.steps]
     target = result.correct_solution
     diag: Diagnosis | None = None
+    if result.first_error_step is not None:
+        k = result.first_error_step
+        prev, cur = analyses[k - 2], analyses[k - 1]
+        diag = diagnose(prev, cur, compare(prev.solution_set, cur.solution_set), k)
+        anchor, phase, step_number = prev, "FIX_ERROR", k
+    elif result.overall_status is OverallStatus.INCOMPLETE:
+        anchor, phase, step_number = analyses[-1], "CONTINUE", len(steps) + 1
+    else:
+        _reject_progress(progress, "the submitted solution could not be verified.")
+        return GuidedCorrection(GuidedStatus.NEEDS_REVIEW, _unverifiable_message(result))
+
+    anchor = _replay_progress(anchor, progress, step_number, target)
     try:
-        if result.first_error_step is not None:
-            k = result.first_error_step
-            prev, cur = analyses[k - 2], analyses[k - 1]
-            diag = diagnose(prev, cur, compare(prev.solution_set, cur.solution_set), k)
-            anchor = prev
-            if _is_final(prev, target):
-                return GuidedCorrection(
-                    GuidedStatus.SOLVED,
-                    f"Step {k - 1} already states the complete answer, so step {k} is not needed — "
-                    "your solution is complete without it.",
-                    phase="FIX_ERROR", first_error_step=k, error_step=steps[k - 1], current_step=prev.raw,
-                    step_number=k, error_category=diag.category, expected_rule=diag.expected_rule,
-                    explanation=diag.explanation, final_solution=prev.solution_set,
-                )
-            expected, _ = repair_step(prev, cur)
-            phase, step_number = "FIX_ERROR", k
-        elif result.overall_status is OverallStatus.INCOMPLETE:
-            anchor = analyses[-1]
-            expected, phase, step_number = None, "CONTINUE", len(steps) + 1
-        else:
-            return GuidedCorrection(GuidedStatus.NEEDS_REVIEW, _unverifiable_message(result))
-
-        for i, text in enumerate(progress):
-            accepted = analyze_step(step_number + i, text)
-            if not accepted.ok or not compare(anchor.solution_set, accepted.solution_set).equivalent:
-                return GuidedCorrection(
-                    GuidedStatus.NEEDS_REVIEW,
-                    f"Progress step {i + 1} ({text!r}) is not a valid continuation; restart guided correction.",
-                )
-            anchor, expected, phase = accepted, None, "CONTINUE"
+        if progress:
+            phase = "CONTINUE"
         step_number += len(progress)
-
         base = dict(
             phase=phase,
             first_error_step=result.first_error_step,
@@ -490,21 +574,20 @@ def correct_guided(
             current_step=anchor.raw,
             step_number=step_number,
             hint_level=hint_level,
+            progress=progress,
         )
-        if progress and _is_final(anchor, target):
+        if progress and is_complete_answer(anchor, target):
             return GuidedCorrection(GuidedStatus.SOLVED, "Solved! Your corrected solution is complete.",
                                     final_solution=anchor.solution_set, **base)
-        if expected is None:
-            expected = next_step(anchor)
-            if expected is None:
-                return GuidedCorrection(GuidedStatus.SOLVED, "Solved! Your corrected solution is complete.",
-                                        final_solution=anchor.solution_set, **base)
-            verify_generated(anchor, expected)
-
         if phase == "FIX_ERROR":
+            expected, _ = repair_step(prev, cur)
             hints = diag.hints
             concept = dict(error_category=diag.category, expected_rule=diag.expected_rule, explanation=diag.explanation)
         else:
+            expected = next_step(anchor)
+            if expected is None:  # cannot happen: an incomplete line always has a next step
+                raise CorrectionUnsafe("No next step for an incomplete solution.")
+            verify_generated(anchor, expected)
             hints = (expected.hint, expected.hint_detail)
             concept = dict(expected_rule=RULE_NAMES[expected.rule], explanation=None)
 
@@ -521,7 +604,7 @@ def correct_guided(
         if attempt is None:
             opener = (
                 f"Step {result.first_error_step} is the first incorrect step. Try rewriting it."
-                if phase == "FIX_ERROR" and not progress
+                if phase == "FIX_ERROR"
                 else "Your work so far is correct. What is the next step?"
             )
             return reply(GuidedStatus.NEEDS_ATTEMPT, opener)
@@ -541,21 +624,22 @@ def correct_guided(
         if compact(tried.raw) == compact(anchor.raw):
             fb = AttemptFeedback(True, "This is equivalent, but it is the same equation as before.")
             return reply(GuidedStatus.NO_PROGRESS, "That's correct but doesn't move the solution forward.", feedback=fb)
-        if _is_final(tried, target):
+
+        accepted = {**base, "current_step": tried.raw, "progress": progress + [attempt]}
+        if is_complete_answer(tried, target):
             return GuidedCorrection(
                 GuidedStatus.SOLVED, "Correct — and your answer is complete!",
                 attempt_feedback=AttemptFeedback(True, "This step is valid and states every solution."),
-                final_solution=tried.solution_set, **{**base, "current_step": tried.raw},
+                final_solution=tried.solution_set, **accepted,
             )
         following = next_step(tried)
-        next_hint = following.hint if following else None
         return GuidedCorrection(
             GuidedStatus.ACCEPTED,
             "Correct! Add this step to your work and continue.",
             attempt_feedback=AttemptFeedback(True, "This step is a valid transformation."),
-            hint=next_hint,
+            hint=following.hint if following else None,
             expected_rule=RULE_NAMES[following.rule] if following else None,
-            **{**base, "current_step": tried.raw, "step_number": step_number + 1, "hint_level": 1},
+            **{**accepted, "step_number": step_number + 1, "hint_level": 1},
         )
     except (CorrectionUnsafe, MathInputError):
         return GuidedCorrection(GuidedStatus.NEEDS_REVIEW, _UNSAFE_MESSAGE, first_error_step=result.first_error_step)
