@@ -7,6 +7,7 @@ Correctness is decided by a deterministic symbolic engine (SymPy + a restricted 
 ## Status
 
 - **Milestone 1 (math engine + `/verify` API): done**
+- **Correction engine + `/correct` API (guided and full modes): done**
 - Milestone 2 (OpenRouter transcription and explanations): not started
 - Milestone 3 (Next.js frontend): not started
 - Milestone 4 (deployment): not started
@@ -26,6 +27,21 @@ Anything outside this scope returns `UNSUPPORTED` or `NEEDS_REVIEW` and never a 
 2. Each step is rewritten as `LHS − RHS = 0`, checked to have degree at most 2, and solved exactly. Its solution set is `ALL_REAL`, `EMPTY`, or a finite set of exact values.
 3. A step is valid only if its solution set equals the solution set of the previous step. The first step that changes the solution set is marked `FIRST_INVALID`, and every step after it is `DOWNSTREAM_DEPENDENT`.
 4. A separate check decides whether the final line states the full solution set of the original equation.
+
+## How corrections work
+
+`POST /api/v1/correct` takes either a `verification_id` returned by `/verify` or the `steps` themselves, together with a `mode`.
+
+- **`FULL`** returns:
+  - the first incorrect step and the kind of mistake,
+  - a corrected replacement step,
+  - the rest of the solution, with an explanation for each step,
+  - the final answer.
+- **`GUIDED`** returns hints at levels 1 to 3. The first two levels name the idea and point to where the mistake is. Level 3 shows the corrected step. The student sends an `attempt`, which is checked against the last valid step, and gets one of: `ACCEPTED`, `REJECTED` (with a reason), `NO_PROGRESS` or `SOLVED`. Previously accepted attempts are sent back in `progress`, so the server keeps no session state.
+
+Every correction is built deterministically and then checked by the same verifier that checks student work. A FULL correction is returned only if the whole corrected solution checks as `CORRECT` with a complete answer. If StepCheck cannot build a correction it has checked, it returns `NEEDS_REVIEW`.
+
+Verification ids are kept in server memory for one hour. They are lost when the server restarts, so a client can always send `steps` instead.
 
 ## Running the backend (Windows)
 
