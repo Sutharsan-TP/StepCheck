@@ -1,0 +1,149 @@
+[
+  {
+    "id": "demo-1-linear",
+    "category": "correct linear transformations",
+    "steps": ["2x + 5 = 15", "2x = 10", "x = 5"],
+    "expected": {
+      "overall_status": "CORRECT",
+      "first_error_step": null,
+      "step_statuses": ["VALID", "VALID", "VALID"],
+      "correct_solution": ["5"],
+      "solution_complete": true
+    }
+  },
+  {
+    "id": "expansion",
+    "category": "expansion",
+    "steps": ["3(x + 2) = 15", "3x + 6 = 15", "3x = 9", "x = 3"],
+    "expected": {
+      "overall_status": "CORRECT",
+      "first_error_step": null,
+      "step_statuses": ["VALID", "VALID", "VALID", "VALID"],
+      "correct_solution": ["3"],
+      "solution_complete": true
+    }
+  },
+  {
+    "id": "like-terms",
+    "category": "combining like terms",
+    "steps": ["4x - 7 + 2x = 11", "6x - 7 = 11", "6x = 18", "x = 3"],
+    "expected": {
+      "overall_status": "CORRECT",
+      "first_error_step": null,
+      "step_statuses": ["VALID", "VALID", "VALID", "VALID"],
+      "correct_solution": ["3"],
+      "solution_complete": true
+    }
+  },
+  {
+    "id": "fractions",
+    "category": "multiplication by a nonzero constant",
+    "steps": ["x/2 + 1/3 = 1", "3x + 2 = 6", "3x = 4", "x = 4/3"],
+    "expected": {
+      "overall_status": "CORRECT",
+      "first_error_step": null,
+      "step_statuses": ["VALID", "VALID", "VALID", "VALID"],
+      "correct_solution": ["4/3"],
+      "solution_complete": true
+    }
+  },
+  {
+    "id": "factorization",
+    "category": "factorization / two distinct real roots",
+    "steps": ["x² - 5x + 6 = 0", "(x - 2)(x - 3) = 0", "x - 2 = 0 or x - 3 = 0", "x = 2 or x = 3"],
+    "expected": {
+      "overall_status": "CORRECT",
+      "first_error_step": null,
+      "step_statuses": ["VALID", "VALID", "VALID", "VALID"],
+      "correct_solution": ["2", "3"],
+      "solution_complete": true
+    }
+  },
+  {
+    "id": "quadratic-formula",
+    "category": "quadratic formula",
+    "steps": ["2x^2 + 3x - 2 = 0", "x = (-3 ± sqrt(9 + 16))/4", "x = (-3 ± 5)/4", "x = 1/2 or x = -2"],
+    "expected": {
+      "overall_status": "CORRECT",
+      "first_error_step": null,
+      "step_statuses": ["VALID", "VALID", "VALID", "VALID"],
+      "correct_solution": ["-2", "1/2"],
+      "solution_complete": true
+    }
+  },
+  {
+    "id": "repeated-root",
+    "category": "repeated roots",
+    "steps": ["x^2 - 4x + 4 = 0", "(x - 2)^2 = 0", "x = 2"],
+    "expected": {
+      "overall_status": "CORRECT",
+      "first_error_step": null,
+      "step_statuses": ["VALID", "VALID", "VALID"],
+      "correct_solution": ["2"],
+      "solution_complete": true
+    }
+  },
+  {
+    "id": "no-real-roots",
+    "category": "no real roots",
+    "steps": ["x^2 + 1 = 0", "x^2 = -1", "no real solution"],
+    "expected": {
+      "overall_status": "CORRECT",
+      "first_error_step": null,
+      "step_statuses": ["VALID", "VALID", "VALID"],
+      "correct_solution": [],
+      "correct_solution_type": "EMPTY",
+      "solution_complete": true
+    }
+  },
+  {
+    "id": "identity",
+    "category": "identity equations",
+    "steps": ["2(x + 1) = 2x + 2", "2x + 2 = 2x + 2", "0 = 0"],
+    "expected": {
+      "overall_status": "CORRECT",
+      "first_error_step": null,
+      "step_statuses": ["VALID", "VALID", "VALID"],
+      "correct_solution": [],
+      "correct_solution_type": "ALL_REAL",
+      "solution_complete": true
+    }
+  },
+  {
+    "id": "contradiction",
+    "category": "contradictions",
+    "steps": ["x + 1 = x + 2", "1 = 2", "no solution"],
+    "expected": {
+      "overall_status": "CORRECT",
+      "first_error_step": null,
+      "step_statuses": ["VALID", "VALID", "VALID"],
+      "correct_solution": [],
+      "correct_solution_type": "EMPTY",
+      "solution_complete": true
+    }
+  },
+  {
+    "id": "irrational-roots",
+    "category": "irrational roots",
+    "steps": ["x^2 - 5x + 3 = 0", "x = (5 ± sqrt(25 - 12))/2", "x = (5 ± sqrt(13))/2"],
+    "expected": {
+      "overall_status": "CORRECT",
+      "first_error_step": null,
+      "step_statuses": ["VALID", "VALID", "VALID"],
+      "correct_solution": ["5/2 - sqrt(13)/2", "sqrt(13)/2 + 5/2"],
+      "solution_complete": true
+    }
+  },
+  {
+    "id": "square-both-roots",
+    "category": "two distinct real roots",
+    "steps": ["x^2 = 9", "x = 3 or x = -3"],
+    "expected": {
+      "overall_status": "CORRECT",
+      "first_error_step": null,
+      "step_statuses": ["VALID", "VALID"],
+      "correct_solution": ["-3", "3"],
+      "solution_complete": true
+    }
+  }
+]

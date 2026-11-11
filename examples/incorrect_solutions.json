@@ -1,0 +1,243 @@
+[
+  {
+    "id": "addition-error",
+    "category": "incorrect addition",
+    "steps": ["2x - 5 = 15", "2x = 15 + 5", "2x = 25", "x = 12.5"],
+    "expected": {
+      "overall_status": "INCORRECT",
+      "first_error_step": 3,
+      "step_statuses": ["VALID", "VALID", "FIRST_INVALID", "DOWNSTREAM_DEPENDENT"],
+      "correct_solution": ["10"],
+      "solution_complete": false
+    }
+  },
+  {
+    "id": "demo-2-subtraction-error",
+    "category": "incorrect subtraction",
+    "steps": ["2x + 5 = 15", "2x = 15 - 5", "2x = 20", "x = 10"],
+    "expected": {
+      "overall_status": "INCORRECT",
+      "first_error_step": 3,
+      "step_statuses": ["VALID", "VALID", "FIRST_INVALID", "DOWNSTREAM_DEPENDENT"],
+      "correct_solution": ["5"],
+      "solution_complete": false
+    }
+  },
+  {
+    "id": "multiplication-error",
+    "category": "incorrect multiplication",
+    "steps": ["x/3 = 4", "x = 7"],
+    "expected": {
+      "overall_status": "INCORRECT",
+      "first_error_step": 2,
+      "step_statuses": ["VALID", "FIRST_INVALID"],
+      "correct_solution": ["12"],
+      "solution_complete": false
+    }
+  },
+  {
+    "id": "division-error",
+    "category": "incorrect division",
+    "steps": ["5x = 20", "x = 20/5", "x = 3"],
+    "expected": {
+      "overall_status": "INCORRECT",
+      "first_error_step": 3,
+      "step_statuses": ["VALID", "VALID", "FIRST_INVALID"],
+      "correct_solution": ["4"],
+      "solution_complete": false
+    }
+  },
+  {
+    "id": "expansion-error",
+    "category": "expansion",
+    "steps": ["3(x + 2) = 15", "3x + 2 = 15", "3x = 13", "x = 13/3"],
+    "expected": {
+      "overall_status": "INCORRECT",
+      "first_error_step": 2,
+      "step_statuses": ["VALID", "FIRST_INVALID", "DOWNSTREAM_DEPENDENT", "DOWNSTREAM_DEPENDENT"],
+      "correct_solution": ["3"],
+      "solution_complete": false
+    }
+  },
+  {
+    "id": "like-terms-error",
+    "category": "combining like terms",
+    "steps": ["4x + 2x = 12", "8x = 12", "x = 3/2"],
+    "expected": {
+      "overall_status": "INCORRECT",
+      "first_error_step": 2,
+      "step_statuses": ["VALID", "FIRST_INVALID", "DOWNSTREAM_DEPENDENT"],
+      "correct_solution": ["2"],
+      "solution_complete": false
+    }
+  },
+  {
+    "id": "sign-error-moving-terms",
+    "category": "incorrect subtraction",
+    "steps": ["3x + 4 = x + 10", "3x - x = 10 + 4", "2x = 14", "x = 7"],
+    "expected": {
+      "overall_status": "INCORRECT",
+      "first_error_step": 2,
+      "step_statuses": ["VALID", "FIRST_INVALID", "DOWNSTREAM_DEPENDENT", "DOWNSTREAM_DEPENDENT"],
+      "correct_solution": ["3"],
+      "solution_complete": false
+    }
+  },
+  {
+    "id": "factorization-error",
+    "category": "factorization",
+    "steps": ["x^2 + x - 6 = 0", "(x - 2)(x - 3) = 0", "x = 2 or x = 3"],
+    "expected": {
+      "overall_status": "INCORRECT",
+      "first_error_step": 2,
+      "step_statuses": ["VALID", "FIRST_INVALID", "DOWNSTREAM_DEPENDENT"],
+      "correct_solution": ["-3", "2"],
+      "solution_complete": false
+    }
+  },
+  {
+    "id": "quadratic-formula-sign-error",
+    "category": "quadratic formula",
+    "steps": ["x^2 - 5x + 6 = 0", "x = (-5 ± sqrt(25 - 24))/2", "x = -2 or x = -3"],
+    "expected": {
+      "overall_status": "INCORRECT",
+      "first_error_step": 2,
+      "step_statuses": ["VALID", "FIRST_INVALID", "DOWNSTREAM_DEPENDENT"],
+      "correct_solution": ["2", "3"],
+      "solution_complete": false
+    }
+  },
+  {
+    "id": "lost-solution-divide-by-x",
+    "category": "lost solutions",
+    "steps": ["x^2 = x", "x = 1"],
+    "expected": {
+      "overall_status": "INCORRECT",
+      "first_error_step": 2,
+      "step_statuses": ["VALID", "FIRST_INVALID"],
+      "correct_solution": ["0", "1"],
+      "solution_complete": false
+    }
+  },
+  {
+    "id": "demo-3-lost-quadratic-root",
+    "category": "lost solutions / incomplete final answer",
+    "steps": ["x² - 5x + 6 = 0", "(x - 2)(x - 3) = 0", "x - 2 = 0", "x = 2"],
+    "expected": {
+      "overall_status": "INCORRECT",
+      "first_error_step": 3,
+      "step_statuses": ["VALID", "VALID", "FIRST_INVALID", "DOWNSTREAM_DEPENDENT"],
+      "correct_solution": ["2", "3"],
+      "solution_complete": false
+    }
+  },
+  {
+    "id": "only-positive-square-root",
+    "category": "lost solutions",
+    "steps": ["x^2 = 9", "x = 3"],
+    "expected": {
+      "overall_status": "INCORRECT",
+      "first_error_step": 2,
+      "step_statuses": ["VALID", "FIRST_INVALID"],
+      "correct_solution": ["-3", "3"],
+      "solution_complete": false
+    }
+  },
+  {
+    "id": "unfinished-factorization",
+    "category": "incomplete final answers",
+    "steps": ["x^2 - 5x + 6 = 0", "(x - 2)(x - 3) = 0"],
+    "expected": {
+      "overall_status": "INCOMPLETE",
+      "first_error_step": null,
+      "step_statuses": ["VALID", "VALID"],
+      "correct_solution": ["2", "3"],
+      "solution_complete": false
+    }
+  },
+  {
+    "id": "roots-claimed-for-no-real-roots",
+    "category": "no real roots",
+    "steps": ["x^2 + 4 = 0", "x = 2 or x = -2"],
+    "expected": {
+      "overall_status": "INCORRECT",
+      "first_error_step": 2,
+      "step_statuses": ["VALID", "FIRST_INVALID"],
+      "correct_solution": [],
+      "correct_solution_type": "EMPTY",
+      "solution_complete": true
+    }
+  },
+  {
+    "id": "unsupported-cubic",
+    "category": "unsupported cubic equations",
+    "steps": ["x^3 - 6x^2 + 11x - 6 = 0", "(x - 1)(x - 2)(x - 3) = 0", "x = 1 or x = 2 or x = 3"],
+    "expected": {
+      "overall_status": "UNSUPPORTED",
+      "first_error_step": null,
+      "step_statuses": ["UNSUPPORTED", "UNSUPPORTED", "NEEDS_REVIEW"],
+      "correct_solution": null,
+      "solution_complete": null
+    }
+  },
+  {
+    "id": "multiple-variables",
+    "category": "multiple variables",
+    "steps": ["x + y = 5", "x = 5 - y"],
+    "expected": {
+      "overall_status": "UNSUPPORTED",
+      "first_error_step": null,
+      "step_statuses": ["UNSUPPORTED", "UNSUPPORTED"],
+      "correct_solution": null,
+      "solution_complete": null
+    }
+  },
+  {
+    "id": "malicious-original",
+    "category": "malicious mathematical input",
+    "steps": ["__import__('os').system('ls') = 0", "x = 1"],
+    "expected": {
+      "overall_status": "NEEDS_REVIEW",
+      "first_error_step": null,
+      "step_statuses": ["NEEDS_REVIEW", "NEEDS_REVIEW"],
+      "correct_solution": null,
+      "solution_complete": null
+    }
+  },
+  {
+    "id": "malicious-mid-solution",
+    "category": "malicious mathematical input",
+    "steps": ["2x = 4", "x = eval(2)", "x = 2"],
+    "expected": {
+      "overall_status": "NEEDS_REVIEW",
+      "first_error_step": null,
+      "step_statuses": ["VALID", "NEEDS_REVIEW", "VALID"],
+      "correct_solution": ["2"],
+      "solution_complete": true
+    }
+  },
+  {
+    "id": "division-by-variable",
+    "category": "unsupported input",
+    "steps": ["6/x = 2", "x = 3"],
+    "expected": {
+      "overall_status": "UNSUPPORTED",
+      "first_error_step": null,
+      "step_statuses": ["UNSUPPORTED", "NEEDS_REVIEW"],
+      "correct_solution": null,
+      "solution_complete": null
+    }
+  },
+  {
+    "id": "radical-equation",
+    "category": "unsupported input",
+    "steps": ["sqrt(x) = 3", "x = 9"],
+    "expected": {
+      "overall_status": "UNSUPPORTED",
+      "first_error_step": null,
+      "step_statuses": ["UNSUPPORTED", "NEEDS_REVIEW"],
+      "correct_solution": null,
+      "solution_complete": null
+    }
+  }
+]
