@@ -37,11 +37,12 @@ Anything outside this scope returns `UNSUPPORTED` or `NEEDS_REVIEW` and never a 
   - a corrected replacement step,
   - the rest of the solution, with an explanation for each step,
   - the final answer.
-- **`GUIDED`** returns hints at levels 1 to 3. The first two levels name the idea and point to where the mistake is. Level 3 shows the corrected step. The student sends an `attempt`, which is checked against the last valid step, and gets one of: `ACCEPTED`, `REJECTED` (with a reason), `NO_PROGRESS` or `SOLVED`. Previously accepted attempts are sent back in `progress`, so the server keeps no session state.
+- **`GUIDED`** returns hints at levels 1 to 3. The first two levels name the idea and point to where the mistake is. Level 3 shows the corrected step. The student sends an `attempt`, which is checked against the last valid step, and gets one of: `ACCEPTED`, `REJECTED` (with a reason), `NO_PROGRESS` or `SOLVED`. The server keeps no session. The client sends back the `progress` and `progress_token` from the previous response, and the server checks every step again on each request.
+- **The answer was already complete:** if the solution was complete before a later wrong or unneeded step, `/correct` keeps the complete solution and lists the later steps to remove. It does not make up replacement steps.
 
 Every correction is built deterministically and then checked by the same verifier that checks student work. A FULL correction is returned only if the whole corrected solution checks as `CORRECT` with a complete answer. If StepCheck cannot build a correction it has checked, it returns `NEEDS_REVIEW`.
 
-Verification ids are kept in server memory for one hour. They are lost when the server restarts, so a client can always send `steps` instead.
+Verification results are kept **in server memory** for 1 hour, up to 1,000 entries. A server restart clears them, so a client can always send `steps` instead. The full contract is in [docs/api-contract.md](docs/api-contract.md).
 
 ## Running the backend (Windows)
 
