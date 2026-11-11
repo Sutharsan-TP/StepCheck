@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.routes import correct, verify
+from app.api.routes import correct, transcribe, verify
 from app.config import settings
 from app.utils.errors import APIError
 
@@ -63,6 +63,7 @@ def create_app() -> FastAPI:
 
     app.include_router(verify.router, prefix=API_PREFIX)
     app.include_router(correct.router, prefix=API_PREFIX)
+    app.include_router(transcribe.router, prefix=API_PREFIX)
     return app
 
 
