@@ -207,6 +207,21 @@ def _quadratic_step(current: StepAnalysis, lhs: sp.Expr, rhs: sp.Expr) -> Genera
             detail,
         )
 
+    return quadratic_formula_step(a, b, c)
+
+
+def quadratic_formula_step(a: sp.Expr, b: sp.Expr, c: sp.Expr) -> GeneratedStep:
+    """x = (-b ± sqrt(b^2 - 4ac))/(2a) with the numbers substituted."""
+    discriminant = sp.expand(b**2 - 4 * a * c)
+    d_sign = sign(discriminant)
+    if d_sign < 0:
+        return GeneratedStep(
+            EMPTY_TEXT,
+            Rule.NEGATIVE_DISCRIMINANT,
+            f"The discriminant b² − 4ac = {_num(discriminant)} is negative, so there are no real solutions.",
+            "Check the discriminant b² − 4ac before solving.",
+            f"Here a = {_num(a)}, b = {_num(b)}, c = {_num(c)}. What is the sign of b² − 4ac?",
+        )
     neg_b, den = -b, 2 * a
     if d_sign == 0:
         return GeneratedStep(
@@ -226,8 +241,8 @@ def _quadratic_step(current: StepAnalysis, lhs: sp.Expr, rhs: sp.Expr) -> Genera
     return GeneratedStep(
         text,
         Rule.QUADRATIC_FORMULA,
-        f"This quadratic does not factor over the rationals, so use the quadratic formula with "
-        f"a = {_num(a)}, b = {_num(b)}, c = {_num(c)}; the discriminant is b² − 4ac = {_num(discriminant)}.",
+        f"Use the quadratic formula with a = {_num(a)}, b = {_num(b)}, c = {_num(c)}; "
+        f"the discriminant is b² − 4ac = {_num(discriminant)}.",
         "Use the quadratic formula.",
         f"Substitute a = {_num(a)}, b = {_num(b)}, c = {_num(c)} into x = (−b ± √(b² − 4ac)) / (2a).",
     )
