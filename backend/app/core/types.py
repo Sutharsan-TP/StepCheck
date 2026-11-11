@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 import sympy as sp
 
@@ -96,6 +97,8 @@ class StepAnalysis:
     latex: str | None = None
     solved_form: bool = False
     error: MathInputError | None = None
+    statement: Any = None  # ParsedStatement (kept untyped to avoid an import cycle)
+    equations: list[tuple[sp.Expr, sp.Expr]] = field(default_factory=list)
 
     @property
     def ok(self) -> bool:

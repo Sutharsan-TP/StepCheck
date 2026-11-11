@@ -457,6 +457,53 @@ def to_latex(node: Node) -> str:
     return ""
 
 
+def to_text(node: Node) -> str:
+    """Plain-text rendering of the IR in the student's own form (re-parseable)."""
+    k = node.kind
+    c = node.children
+    if k == "num":
+        return node.value or ""
+    if k == "var":
+        return "x"
+    if k == "paren":
+        return f"({to_text(c[0])})"
+    if k == "sqrt":
+        return f"sqrt({to_text(c[0].unwrap())})"
+    if k == "add":
+        return f"{to_text(c[0])} + {to_text(c[1])}"
+    if k == "sub":
+        return f"{to_text(c[0])} - {to_text(c[1])}"
+    if k == "addpm":
+        return f"{to_text(c[0])} ± {to_text(c[1])}"
+    if k == "mul":
+        return f"{to_text(c[0])} * {to_text(c[1])}"
+    if k == "div":
+        return f"{to_text(c[0])}/{to_text(c[1])}"
+    if k == "neg":
+        return f"-{to_text(c[0])}"
+    if k == "pos":
+        return f"+{to_text(c[0])}"
+    if k == "pm":
+        return f"±{to_text(c[0])}"
+    if k == "pow":
+        return f"{to_text(c[0])}^{node.value}"
+    if k == "imul":
+        return "".join(to_text(f) for f in c)
+    return ""
+
+
+def node_to_sympy(node: Node) -> sp.Expr:
+    """Exact SymPy value of a ±-free IR node (validated like any other input)."""
+    values = _to_sympy(node)
+    if len(values) != 1:
+        raise MathInputError(ErrorCode.AMBIGUOUS_EXPRESSION, "Unexpected '±' in this expression.")
+    return values[0]
+
+
+def has_plus_minus(node: Node) -> bool:
+    return node.kind in ("pm", "addpm") or any(has_plus_minus(ch) for ch in node.children)
+
+
 # ---------------------------------------------------------- IR -> SymPy (exact)
 
 

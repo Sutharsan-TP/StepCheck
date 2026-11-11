@@ -34,6 +34,7 @@ def analyze_step(index: int, raw: str) -> StepAnalysis:
     analysis = StepAnalysis(index=index, raw=raw)
     try:
         statement = parse_statement(raw)
+        analysis.statement = statement
         analysis.latex = statement.latex
         analysis.solved_form = statement.solved_form
         if statement.literal is not None:
@@ -44,6 +45,7 @@ def analyze_step(index: int, raw: str) -> StepAnalysis:
         normalized: list[str] = []
         for clause in statement.clauses:
             for lhs, rhs in clause_equations(clause):
+                analysis.equations.append((lhs, rhs))
                 poly = normalize_equation(lhs, rhs)
                 normalized.append(str(poly))
                 sets.append(solve_polynomial(poly))
