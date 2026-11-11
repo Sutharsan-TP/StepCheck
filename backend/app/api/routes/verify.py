@@ -11,5 +11,5 @@ router = APIRouter(tags=["verification"])
 def verify(request: VerifyRequest) -> VerifyResponse:
     # Sync handler: SymPy work runs in FastAPI's threadpool, not the event loop.
     result = verify_steps(request.steps)
-    verification_id = verification_store.save(request.steps)
+    verification_id = verification_store.save(request.steps, result)
     return VerifyResponse.from_result(result, request.request_id, verification_id)

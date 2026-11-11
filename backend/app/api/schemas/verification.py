@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Annotated, Literal
 
 import sympy as sp
-from pydantic import BaseModel, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from app.core.types import (
     FinalAnswerStatus,
@@ -21,6 +21,8 @@ StepText = Annotated[str, StringConstraints(max_length=MAX_STEP_LENGTH)]
 
 
 class VerifyRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     request_id: Annotated[str, StringConstraints(max_length=MAX_REQUEST_ID_LENGTH)] | None = None
     variable: Literal["x"] = "x"
     domain: Literal["REAL"] = "REAL"

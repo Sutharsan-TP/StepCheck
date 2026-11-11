@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from typing import Annotated, Literal
+from uuid import UUID
 
 import sympy as sp
-from pydantic import BaseModel, Field, StringConstraints, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 from app.api.schemas.verification import SolutionSetOut, StepText
 from app.core.correction_engine import (
@@ -13,6 +14,7 @@ from app.core.correction_engine import (
     CorrectionStep,
     FullCorrection,
     GuidedCorrection,
+    RemovedStep,
 )
 from app.core.types import StepStatus
 from app.utils.validators import MAX_STEPS, MIN_STEPS
@@ -21,19 +23,28 @@ MAX_PROGRESS_STEPS = 20
 
 
 class CorrectRequest(BaseModel):
-    verification_id: Annotated[str, StringConstraints(max_length=64)] | None = None
+    # Unknown fields (e.g. a client-asserted "status" or "valid") are rejected outright:
+    # correctness is decided only by the server.
+    model_config = ConfigDict(extra="forbid")
+
+    verification_id: UUID | None = None
     steps: list[StepText] | None = Field(default=None, min_length=MIN_STEPS, max_length=MAX_STEPS)
+    variable: Literal["x"] = "x"
+    domain: Literal["REAL"] = "REAL"
     mode: Literal["GUIDED", "FULL"]
     attempt: StepText | None = None
     progress: list[StepText] = Field(default_factory=list, max_length=MAX_PROGRESS_STEPS)
+    progress_token: Annotated[str, StringConstraints(max_length=128)] | None = None
     hint_level: int = Field(default=1, ge=1, le=MAX_HINT_LEVEL)
 
     @model_validator(mode="after")
-    def _one_source(self) -> "CorrectRequest":
+    def _consistent(self) -> "CorrectRequest":
         if (self.verification_id is None) == (self.steps is None):
             raise ValueError("Provide exactly one of 'verification_id' or 'steps'.")
-        if self.mode == "FULL" and (self.attempt is not None or self.progress):
-            raise ValueError("'attempt' and 'progress' are only used in GUIDED mode.")
+        if self.mode == "FULL" and (self.attempt is not None or self.progress or self.progress_token):
+            raise ValueError("'attempt', 'progress' and 'progress_token' are only used in GUIDED mode.")
+        if self.progress and not self.progress_token:
+            raise ValueError("'progress' must be accompanied by the 'progress_token' returned by the server.")
         return self
 
 
@@ -59,6 +70,18 @@ class CorrectionStepOut(BaseModel):
         )
 
 
+class RemovedStepOut(BaseModel):
+    step_number: int
+    text: str
+    status: StepStatus
+    kind: Literal["INCORRECT", "UNNECESSARY", "UNVERIFIABLE"]
+    reason: str
+
+    @staticmethod
+    def of(r: RemovedStep) -> "RemovedStepOut":
+        return RemovedStepOut(step_number=r.step_number, text=r.text, status=r.status, kind=r.kind, reason=r.reason)
+
+
 class CorrectionVerificationOut(BaseModel):
     overall_status: str
     all_transitions_valid: bool
@@ -66,6 +89,9 @@ class CorrectionVerificationOut(BaseModel):
 
 
 class FullCorrectionOut(BaseModel):
+    action: Literal["NONE", "REPLACE_STEP", "COMPLETE_SOLUTION", "REMOVE_REMAINING_STEPS"]
+    complete_answer_step: int | None
+    removed_steps: list[RemovedStepOut]
     original_step: str | None
     error_category: str | None
     expected_rule: str | None
@@ -104,6 +130,10 @@ class GuidedCorrectionOut(BaseModel):
     revealed_explanation: str | None
     attempt_feedback: AttemptFeedbackOut | None
     final_solution: SolutionSetOut | None
+    complete_answer_step: int | None
+    removed_steps: list[RemovedStepOut]
+    progress: list[str]  # server-verified accepted steps; send back unchanged with progress_token
+    progress_token: str
 
 
 class CorrectResponse(BaseModel):
@@ -119,6 +149,9 @@ class CorrectResponse(BaseModel):
         d = c.diagnosis
         v = c.verification
         full = FullCorrectionOut(
+            action=c.action.value,
+            complete_answer_step=c.complete_answer_step,
+            removed_steps=[RemovedStepOut.of(r) for r in c.removed_steps],
             original_step=c.original_step,
             error_category=d.category.value if d else None,
             expected_rule=d.expected_rule if d else None,
@@ -143,7 +176,7 @@ class CorrectResponse(BaseModel):
         )
 
     @staticmethod
-    def from_guided(g: GuidedCorrection) -> "CorrectResponse":
+    def from_guided(g: GuidedCorrection, progress_token: str) -> "CorrectResponse":
         fb = g.attempt_feedback
         guided = GuidedCorrectionOut(
             phase=g.phase,
@@ -172,6 +205,10 @@ class CorrectResponse(BaseModel):
                 else None
             ),
             final_solution=SolutionSetOut.of(g.final_solution),
+            complete_answer_step=g.complete_answer_step,
+            removed_steps=[RemovedStepOut.of(r) for r in g.removed_steps],
+            progress=g.progress,
+            progress_token=progress_token,
         )
         return CorrectResponse(
             mode="GUIDED", status=g.status.value, message=g.message, first_error_step=g.first_error_step, guided=guided
