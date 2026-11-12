@@ -1,59 +1,108 @@
 # StepCheck
 
-StepCheck checks each step of a student's equation-solving work. It finds the first step that is wrong, shows which later steps rely on that mistake, and reports whether the final answer includes every solution.
+StepCheck checks each line of a student's algebra working. It finds the first step that is wrong, explains why it's invalid, and helps the student fix it — by guiding them with hints, or by showing a fully verified correction.
 
-Correctness is decided by a deterministic symbolic engine (SymPy + a restricted Lark grammar). AI is used only to transcribe handwriting and to write explanations. It never decides whether a step is correct.
+> **Design rule:** a deterministic symbolic engine (SymPy and a restricted grammar) decides what is mathematically correct. AI only reads handwriting and helps phrase explanations, and it can never change a verdict.
 
-## Status
+| Area | Status |
+|---|---|
+| Math engine: first-error detection and answer completeness | Done |
+| Correction engine (FULL and GUIDED modes) | Done |
+| AI: handwriting transcription and explanations through OpenRouter | Done, tested with mocks. Needs a key to run against real models. |
+| Frontend: landing page, workspace, transcription review, results, corrections | Done |
+| Deployment (Render and Vercel) | Not started yet |
 
-- **Milestone 1 (math engine + `/verify` API): done**
-- **Correction engine + `/correct` API (guided and full modes): done**
-- Milestone 2 (OpenRouter transcription and explanations): not started
-- Milestone 3 (Next.js frontend): not started
-- Milestone 4 (deployment): not started
+## What it supports
 
-## Supported mathematics
+- One variable, `x`, over the real numbers.
+- Linear and quadratic equations: expanding, combining like terms, doing the same operation to both sides, factoring, the quadratic formula (`±`), and the square-root property.
+- Exact answers, including fractions and square roots.
+- Equations that hold for every `x`, and equations with no real solution.
 
-- Equations in a single variable `x`, solved over the real numbers.
-- Linear and quadratic equations with integer, rational or decimal coefficients. Decimals are treated as exact fractions.
-- Square roots of constants, `±`, factored forms, and answers written as `x = a or x = b`.
-- Steps written as `no solution` or `all real numbers`.
+Anything else returns `UNSUPPORTED` or `NEEDS_REVIEW` and is never guessed. That includes cubics, other variables, trigonometry, logarithms, inequalities, dividing by an expression with `x` in it, and square roots of `x`.
 
-Anything outside this scope returns `UNSUPPORTED` or `NEEDS_REVIEW` and never a guessed answer. That includes higher-degree equations, other variables, functions, division by `x`, and square roots of expressions containing `x`.
+## Repository layout
 
-## How verification works
+```
+backend/    FastAPI + SymPy + Lark. app/core is the math engine (no AI); app/services holds AI, images, limits and storage.
+frontend/   Next.js 16 + React 19 + Tailwind 4 + KaTeX.
+examples/   Curated solutions (also used by the tests) and synthetic handwritten samples.
+scripts/    generate_samples.py, which creates the synthetic handwriting images.
+docs/       architecture.md, api-contract.md, demo.md
+```
 
-1. Each step is parsed with a restricted grammar. The parser never uses `eval`, `sympify` or `parse_expr`.
-2. Each step is rewritten as `LHS − RHS = 0`, checked to have degree at most 2, and solved exactly. Its solution set is `ALL_REAL`, `EMPTY`, or a finite set of exact values.
-3. A step is valid only if its solution set equals the solution set of the previous step. The first step that changes the solution set is marked `FIRST_INVALID`, and every step after it is `DOWNSTREAM_DEPENDENT`.
-4. A separate check decides whether the final line states the full solution set of the original equation.
+## Running locally
 
-## How corrections work
+You need Python 3.12 and Node.js 22 or 24 (LTS).
 
-`POST /api/v1/correct` takes either a `verification_id` returned by `/verify` or the `steps` themselves, together with a `mode`.
-
-- **`FULL`** returns:
-  - the first incorrect step and the kind of mistake,
-  - a corrected replacement step,
-  - the rest of the solution, with an explanation for each step,
-  - the final answer.
-- **`GUIDED`** returns hints at levels 1 to 3. The first two levels name the idea and point to where the mistake is. Level 3 shows the corrected step. The student sends an `attempt`, which is checked against the last valid step, and gets one of: `ACCEPTED`, `REJECTED` (with a reason), `NO_PROGRESS` or `SOLVED`. The server keeps no session. The client sends back the `progress` and `progress_token` from the previous response, and the server checks every step again on each request.
-- **The answer was already complete:** if the solution was complete before a later wrong or unneeded step, `/correct` keeps the complete solution and lists the later steps to remove. It does not make up replacement steps.
-
-Every correction is built deterministically and then checked by the same verifier that checks student work. A FULL correction is returned only if the whole corrected solution checks as `CORRECT` with a complete answer. If StepCheck cannot build a correction it has checked, it returns `NEEDS_REVIEW`.
-
-Verification results are kept **in server memory** for 1 hour, up to 1,000 entries. A server restart clears them, so a client can always send `steps` instead. The full contract is in [docs/api-contract.md](docs/api-contract.md).
-
-## Running the backend (Windows)
+### Backend
 
 ```powershell
 cd backend
 python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt
-.venv\Scripts\python -m pytest
+copy .env.example .env          # optional: edit settings
 .venv\Scripts\python -m uvicorn app.main:app --reload --port 8000
 ```
 
-- Health check: `GET http://localhost:8000/api/v1/health`
-- Verification: `POST http://localhost:8000/api/v1/verify`, for example with `{"steps": ["2x + 5 = 15", "2x = 10", "x = 5"]}`
-- Curated examples: `examples/`
+API docs are at http://localhost:8000/docs.
+
+### Frontend
+
+```powershell
+cd frontend
+npm install
+copy .env.local.example .env.local   # NEXT_PUBLIC_API_URL=http://localhost:8000
+npm run dev                          # http://localhost:3000
+```
+
+### Demo without an API key
+
+Start the backend with the offline AI stub, which never makes a network call:
+
+```powershell
+$env:STEPCHECK_STUB_AI="true"; .venv\Scripts\python -m uvicorn app.main:app --port 8000
+```
+
+Then upload any image from `examples/handwritten_samples/` on the **Upload photo** tab.
+
+## Configuration (`backend/.env`)
+
+| Variable | Purpose |
+|---|---|
+| `CORS_ORIGINS` | Comma-separated frontend origins (default `http://localhost:3000`). |
+| `OPENROUTER_API_KEY` | Needed for real transcription and AI explanations. Kept on the backend only. |
+| `OPENROUTER_VISION_MODEL`, `OPENROUTER_TEXT_MODEL`, `OPENROUTER_FALLBACK_MODEL` | Model names. None are hardcoded. Use models you've tested for JSON output, and for images in the vision model. |
+| `OPENROUTER_TIMEOUT_SECONDS`, `OPENROUTER_MAX_RETRIES` | AI call timeout and number of retries. |
+| `PROGRESS_TOKEN_SECRET` | Signs guided-correction progress. Set a long random value. If it's unset, a new secret is generated at startup and progress tokens stop working after a restart. |
+| `RATE_LIMIT_*_PER_MINUTE`, `TRUST_PROXY` | Per-client rate limits, and whether to trust `X-Forwarded-For`. |
+| `STEPCHECK_STUB_AI` | `true` only for local demos and tests. |
+
+**What needs an OpenRouter key:**
+- `/transcribe`: without a key it returns `503 AI_UNAVAILABLE`.
+- AI-written explanations: without a key, `/explain` falls back to deterministic template text.
+
+Verification and corrections never need a key. Once a key is set, check the configured models with:
+
+```powershell
+cd backend; .venv\Scripts\python scripts\smoke_openrouter.py   # makes real, billable requests
+```
+
+**Storage:** verification results are kept in server memory for 1 hour, up to 1,000 entries. A restart clears them. The frontend handles this by resending the steps.
+
+## Tests
+
+```powershell
+cd backend;  .venv\Scripts\python -m pytest     # math engine, corrections, AI services (mocked), API
+cd frontend; npm run check:api                  # generated types match the backend's OpenAPI schema
+cd frontend; npm run lint; npm run typecheck; npm run test
+cd frontend; npx playwright install chromium; npm run e2e   # real backend + offline AI stub, in Chromium
+```
+
+None of the automated tests call a real AI service.
+
+## More
+
+- [docs/architecture.md](docs/architecture.md): components, how a step is judged, trust boundaries, safety measures.
+- [docs/api-contract.md](docs/api-contract.md): endpoints, error codes, the guided-correction protocol, storage.
+- [docs/demo.md](docs/demo.md): a demo script under three minutes.
