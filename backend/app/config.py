@@ -38,6 +38,8 @@ class Settings:
     )
     # Only behind a trusted reverse proxy (e.g. Render): use X-Forwarded-For for client IPs.
     trust_proxy: bool = os.getenv("TRUST_PROXY", "false").lower() in ("1", "true", "yes")
+    # Local demos / end-to-end tests only: answer AI requests with a deterministic offline stub.
+    stub_ai: bool = os.getenv("STEPCHECK_STUB_AI", "false").lower() in ("1", "true", "yes")
     # OpenRouter. Model names are configuration only; none are hardcoded or assumed
     # to be free or vision-capable.
     openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY", "")

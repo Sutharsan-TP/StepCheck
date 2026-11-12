@@ -226,6 +226,10 @@ class OpenRouterClient:
 
 def get_openrouter_client() -> OpenRouterClient:
     """FastAPI dependency (overridable in tests)."""
+    if settings.stub_ai:
+        from app.services.stub_ai import stub_openrouter_client  # local/e2e only; never contacts the network
+
+        return stub_openrouter_client()
     return OpenRouterClient(
         api_key=settings.openrouter_api_key,
         models={"vision": settings.openrouter_vision_model, "text": settings.openrouter_text_model},
