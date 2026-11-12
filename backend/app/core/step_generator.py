@@ -228,7 +228,7 @@ def quadratic_formula_step(a: sp.Expr, b: sp.Expr, c: sp.Expr) -> GeneratedStep:
         return GeneratedStep(
             f"x = {_num(sp.radsimp(neg_b / den))}",
             Rule.QUADRATIC_FORMULA,
-            f"The discriminant b² − 4ac is 0, so the quadratic formula gives one repeated root x = −b / (2a).",
+            "The discriminant b² − 4ac is 0, so the quadratic formula gives one repeated root x = −b / (2a).",
             "Check the discriminant b² − 4ac.",
             f"Here a = {_num(a)}, b = {_num(b)}, c = {_num(c)}. A zero discriminant gives a single root.",
         )
@@ -314,7 +314,7 @@ def _linear_step(current: StepAnalysis, lhs: sp.Expr, rhs: sp.Expr) -> Generated
         Rule.DIVIDE_BOTH_SIDES,
         f"Divide both sides by {_num(a1)}.",
         "Make the coefficient of x equal to 1.",
-        f"What number is multiplying x? Divide both sides by it.",
+        "What number is multiplying x? Divide both sides by it.",
     )
 
 
