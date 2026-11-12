@@ -1,0 +1,91 @@
+{
+ "mode": "FULL",
+ "status": "CORRECTED",
+ "message": "Step 3 was the first incorrect step. Here is a verified correction.",
+ "first_error_step": 3,
+ "guided": null,
+ "full": {
+  "action": "REPLACE_STEP",
+  "complete_answer_step": 4,
+  "removed_steps": [],
+  "original_step": "x - 2 = 0",
+  "error_category": "LOST_FACTOR",
+  "expected_rule": "Zero-product property: if A·B = 0 then A = 0 or B = 0",
+  "explanation": "Step 3 keeps only part of the product, so a solution is lost.",
+  "evidence": "Step 2 has solution set {2, 3}, but step 3 has {2}. Lost: x = 3.",
+  "corrected_step": {
+   "step_number": 3,
+   "text": "x - 2 = 0 or x - 3 = 0",
+   "latex": "x - 2 = 0 \\quad\\text{or}\\quad x - 3 = 0",
+   "source": "CORRECTED",
+   "rule": "ZERO_PRODUCT",
+   "rule_name": "Zero-product property: if A·B = 0 then A = 0 or B = 0",
+   "explanation": "Step 2 has solution set {2, 3}, but step 3 has {2}. Lost: x = 3. A product is zero exactly when one of its factors is zero, so every factor must be set equal to zero — none can be dropped."
+  },
+  "continuation": [
+   {
+    "step_number": 4,
+    "text": "x = 2 or x = 3",
+    "latex": "x = 2 \\quad\\text{or}\\quad x = 3",
+    "source": "GENERATED",
+    "rule": "SOLVE_EACH_EQUATION",
+    "rule_name": "Solve each simple equation",
+    "explanation": "Solve each of the simpler equations; together their solutions solve the original equation."
+   }
+  ],
+  "corrected_solution": [
+   {
+    "step_number": 1,
+    "text": "x^2 - 5x + 6 = 0",
+    "latex": "{x}^{2} - 5 x + 6 = 0",
+    "source": "STUDENT",
+    "rule": null,
+    "rule_name": null,
+    "explanation": null
+   },
+   {
+    "step_number": 2,
+    "text": "(x - 2)(x - 3) = 0",
+    "latex": "\\left(x - 2\\right) \\left(x - 3\\right) = 0",
+    "source": "STUDENT",
+    "rule": null,
+    "rule_name": null,
+    "explanation": null
+   },
+   {
+    "step_number": 3,
+    "text": "x - 2 = 0 or x - 3 = 0",
+    "latex": "x - 2 = 0 \\quad\\text{or}\\quad x - 3 = 0",
+    "source": "CORRECTED",
+    "rule": "ZERO_PRODUCT",
+    "rule_name": "Zero-product property: if A·B = 0 then A = 0 or B = 0",
+    "explanation": "Step 2 has solution set {2, 3}, but step 3 has {2}. Lost: x = 3. A product is zero exactly when one of its factors is zero, so every factor must be set equal to zero — none can be dropped."
+   },
+   {
+    "step_number": 4,
+    "text": "x = 2 or x = 3",
+    "latex": "x = 2 \\quad\\text{or}\\quad x = 3",
+    "source": "GENERATED",
+    "rule": "SOLVE_EACH_EQUATION",
+    "rule_name": "Solve each simple equation",
+    "explanation": "Solve each of the simpler equations; together their solutions solve the original equation."
+   }
+  ],
+  "final_solution": {
+   "type": "FINITE_SET",
+   "values": [
+    "2",
+    "3"
+   ],
+   "latex": [
+    "2",
+    "3"
+   ]
+  },
+  "verification": {
+   "overall_status": "CORRECT",
+   "all_transitions_valid": true,
+   "solution_complete": true
+  }
+ }
+}

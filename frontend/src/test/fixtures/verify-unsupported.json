@@ -1,0 +1,88 @@
+{
+ "request_id": null,
+ "verification_id": "bdc2b63f-2716-4a5e-bdd2-52fba6587d7e",
+ "overall_status": "UNSUPPORTED",
+ "first_error_step": null,
+ "complete_answer_step": null,
+ "steps": [
+  {
+   "step": 1,
+   "input": "x^3 = 8",
+   "status": "UNSUPPORTED",
+   "latex": "{x}^{3} = 8",
+   "normalized": null,
+   "solution_set": null,
+   "solved_form": false,
+   "error": {
+    "code": "DEGREE_TOO_HIGH",
+    "category": "UNSUPPORTED",
+    "message": "This equation has degree 3; only linear and quadratic equations are supported."
+   }
+  },
+  {
+   "step": 2,
+   "input": "2x + = 5",
+   "status": "NEEDS_REVIEW",
+   "latex": null,
+   "normalized": null,
+   "solution_set": null,
+   "solved_form": false,
+   "error": {
+    "code": "SYNTAX_ERROR",
+    "category": "NEEDS_REVIEW",
+    "message": "Unexpected '=' near position 6."
+   }
+  },
+  {
+   "step": 3,
+   "input": "x = 2",
+   "status": "NEEDS_REVIEW",
+   "latex": "x = 2",
+   "normalized": "x - 2 = 0",
+   "solution_set": {
+    "type": "FINITE_SET",
+    "values": [
+     "2"
+    ],
+    "latex": [
+     "2"
+    ]
+   },
+   "solved_form": true,
+   "error": null
+  }
+ ],
+ "transitions": [
+  {
+   "from_step": 1,
+   "to_step": 2,
+   "status": "NEEDS_REVIEW",
+   "reason_code": "SYNTAX_ERROR",
+   "compared_to_step": null,
+   "locally_valid": null,
+   "matches_original": null,
+   "lost_solutions": [],
+   "extraneous_solutions": []
+  },
+  {
+   "from_step": 2,
+   "to_step": 3,
+   "status": "NEEDS_REVIEW",
+   "reason_code": "NO_VERIFIED_REFERENCE",
+   "compared_to_step": null,
+   "locally_valid": null,
+   "matches_original": null,
+   "lost_solutions": [],
+   "extraneous_solutions": []
+  }
+ ],
+ "correct_solution": null,
+ "correct_solution_set": null,
+ "submitted_solution": null,
+ "submitted_solution_set": null,
+ "final_answer_status": "UNVERIFIABLE",
+ "final_answer_correct": null,
+ "solution_complete": null,
+ "missing_solutions": null,
+ "extraneous_solutions": null
+}

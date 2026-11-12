@@ -1,0 +1,153 @@
+{
+ "request_id": null,
+ "verification_id": "775d164b-131a-41ac-8615-907ab28d9411",
+ "overall_status": "INCORRECT",
+ "first_error_step": 3,
+ "complete_answer_step": null,
+ "steps": [
+  {
+   "step": 1,
+   "input": "2x + 5 = 15",
+   "status": "VALID",
+   "latex": "2 x + 5 = 15",
+   "normalized": "2*x - 10 = 0",
+   "solution_set": {
+    "type": "FINITE_SET",
+    "values": [
+     "5"
+    ],
+    "latex": [
+     "5"
+    ]
+   },
+   "solved_form": false,
+   "error": null
+  },
+  {
+   "step": 2,
+   "input": "2x = 15 - 5",
+   "status": "VALID",
+   "latex": "2 x = 15 - 5",
+   "normalized": "2*x - 10 = 0",
+   "solution_set": {
+    "type": "FINITE_SET",
+    "values": [
+     "5"
+    ],
+    "latex": [
+     "5"
+    ]
+   },
+   "solved_form": false,
+   "error": null
+  },
+  {
+   "step": 3,
+   "input": "2x = 20",
+   "status": "FIRST_INVALID",
+   "latex": "2 x = 20",
+   "normalized": "2*x - 20 = 0",
+   "solution_set": {
+    "type": "FINITE_SET",
+    "values": [
+     "10"
+    ],
+    "latex": [
+     "10"
+    ]
+   },
+   "solved_form": false,
+   "error": null
+  },
+  {
+   "step": 4,
+   "input": "x = 10",
+   "status": "DOWNSTREAM_DEPENDENT",
+   "latex": "x = 10",
+   "normalized": "x - 10 = 0",
+   "solution_set": {
+    "type": "FINITE_SET",
+    "values": [
+     "10"
+    ],
+    "latex": [
+     "10"
+    ]
+   },
+   "solved_form": true,
+   "error": null
+  }
+ ],
+ "transitions": [
+  {
+   "from_step": 1,
+   "to_step": 2,
+   "status": "VALID",
+   "reason_code": null,
+   "compared_to_step": 1,
+   "locally_valid": true,
+   "matches_original": true,
+   "lost_solutions": [],
+   "extraneous_solutions": []
+  },
+  {
+   "from_step": 2,
+   "to_step": 3,
+   "status": "FIRST_INVALID",
+   "reason_code": "SOLUTIONS_CHANGED",
+   "compared_to_step": 2,
+   "locally_valid": false,
+   "matches_original": false,
+   "lost_solutions": [
+    "5"
+   ],
+   "extraneous_solutions": [
+    "10"
+   ]
+  },
+  {
+   "from_step": 3,
+   "to_step": 4,
+   "status": "DOWNSTREAM_DEPENDENT",
+   "reason_code": null,
+   "compared_to_step": 3,
+   "locally_valid": true,
+   "matches_original": false,
+   "lost_solutions": [],
+   "extraneous_solutions": []
+  }
+ ],
+ "correct_solution": [
+  "5"
+ ],
+ "correct_solution_set": {
+  "type": "FINITE_SET",
+  "values": [
+   "5"
+  ],
+  "latex": [
+   "5"
+  ]
+ },
+ "submitted_solution": [
+  "10"
+ ],
+ "submitted_solution_set": {
+  "type": "FINITE_SET",
+  "values": [
+   "10"
+  ],
+  "latex": [
+   "10"
+  ]
+ },
+ "final_answer_status": "SOLVED",
+ "final_answer_correct": false,
+ "solution_complete": false,
+ "missing_solutions": [
+  "5"
+ ],
+ "extraneous_solutions": [
+  "10"
+ ]
+}

@@ -1,0 +1,156 @@
+{
+ "request_id": null,
+ "verification_id": "34660ed6-fc5d-485a-bc0a-b583cf1f7d06",
+ "overall_status": "INCORRECT",
+ "first_error_step": 3,
+ "complete_answer_step": null,
+ "steps": [
+  {
+   "step": 1,
+   "input": "x^2 - 5x + 6 = 0",
+   "status": "VALID",
+   "latex": "{x}^{2} - 5 x + 6 = 0",
+   "normalized": "x**2 - 5*x + 6 = 0",
+   "solution_set": {
+    "type": "FINITE_SET",
+    "values": [
+     "2",
+     "3"
+    ],
+    "latex": [
+     "2",
+     "3"
+    ]
+   },
+   "solved_form": false,
+   "error": null
+  },
+  {
+   "step": 2,
+   "input": "(x - 2)(x - 3) = 0",
+   "status": "VALID",
+   "latex": "\\left(x - 2\\right) \\left(x - 3\\right) = 0",
+   "normalized": "x**2 - 5*x + 6 = 0",
+   "solution_set": {
+    "type": "FINITE_SET",
+    "values": [
+     "2",
+     "3"
+    ],
+    "latex": [
+     "2",
+     "3"
+    ]
+   },
+   "solved_form": false,
+   "error": null
+  },
+  {
+   "step": 3,
+   "input": "x - 2 = 0",
+   "status": "FIRST_INVALID",
+   "latex": "x - 2 = 0",
+   "normalized": "x - 2 = 0",
+   "solution_set": {
+    "type": "FINITE_SET",
+    "values": [
+     "2"
+    ],
+    "latex": [
+     "2"
+    ]
+   },
+   "solved_form": false,
+   "error": null
+  },
+  {
+   "step": 4,
+   "input": "x = 2",
+   "status": "DOWNSTREAM_DEPENDENT",
+   "latex": "x = 2",
+   "normalized": "x - 2 = 0",
+   "solution_set": {
+    "type": "FINITE_SET",
+    "values": [
+     "2"
+    ],
+    "latex": [
+     "2"
+    ]
+   },
+   "solved_form": true,
+   "error": null
+  }
+ ],
+ "transitions": [
+  {
+   "from_step": 1,
+   "to_step": 2,
+   "status": "VALID",
+   "reason_code": null,
+   "compared_to_step": 1,
+   "locally_valid": true,
+   "matches_original": true,
+   "lost_solutions": [],
+   "extraneous_solutions": []
+  },
+  {
+   "from_step": 2,
+   "to_step": 3,
+   "status": "FIRST_INVALID",
+   "reason_code": "LOST_SOLUTIONS",
+   "compared_to_step": 2,
+   "locally_valid": false,
+   "matches_original": false,
+   "lost_solutions": [
+    "3"
+   ],
+   "extraneous_solutions": []
+  },
+  {
+   "from_step": 3,
+   "to_step": 4,
+   "status": "DOWNSTREAM_DEPENDENT",
+   "reason_code": null,
+   "compared_to_step": 3,
+   "locally_valid": true,
+   "matches_original": false,
+   "lost_solutions": [],
+   "extraneous_solutions": []
+  }
+ ],
+ "correct_solution": [
+  "2",
+  "3"
+ ],
+ "correct_solution_set": {
+  "type": "FINITE_SET",
+  "values": [
+   "2",
+   "3"
+  ],
+  "latex": [
+   "2",
+   "3"
+  ]
+ },
+ "submitted_solution": [
+  "2"
+ ],
+ "submitted_solution_set": {
+  "type": "FINITE_SET",
+  "values": [
+   "2"
+  ],
+  "latex": [
+   "2"
+  ]
+ },
+ "final_answer_status": "SOLVED",
+ "final_answer_correct": false,
+ "solution_complete": false,
+ "missing_solutions": [
+  "3"
+ ],
+ "extraneous_solutions": []
+}

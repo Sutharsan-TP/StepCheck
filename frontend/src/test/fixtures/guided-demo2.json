@@ -1,0 +1,211 @@
+{
+ "start": {
+  "mode": "GUIDED",
+  "status": "NEEDS_ATTEMPT",
+  "message": "Step 3 is the first incorrect step. Try rewriting it.",
+  "first_error_step": 3,
+  "guided": {
+   "phase": "FIX_ERROR",
+   "error_step": "2x = 20",
+   "current_step": "2x = 15 - 5",
+   "step_number": 3,
+   "error_category": "ADDITION_SUBTRACTION_ERROR",
+   "expected_rule": "Simplifying a side must not change its value",
+   "explanation": "Step 3 changes the value of the right-hand side: 15 - 5 was not simplified correctly.",
+   "hint": "Re-check the arithmetic on the right-hand side.",
+   "hint_level": 1,
+   "max_hint_level": 3,
+   "reveal_answer": false,
+   "revealed_step": null,
+   "revealed_explanation": null,
+   "attempt_feedback": null,
+   "final_solution": null,
+   "complete_answer_step": null,
+   "removed_steps": [],
+   "progress": [],
+   "progress_token": "7ff0d0065eff0af00af737f36a5da8c436bc9531eb6ad2540d24866babbcee07"
+  },
+  "full": null
+ },
+ "hint2": {
+  "mode": "GUIDED",
+  "status": "NEEDS_ATTEMPT",
+  "message": "Step 3 is the first incorrect step. Try rewriting it.",
+  "first_error_step": 3,
+  "guided": {
+   "phase": "FIX_ERROR",
+   "error_step": "2x = 20",
+   "current_step": "2x = 15 - 5",
+   "step_number": 3,
+   "error_category": "ADDITION_SUBTRACTION_ERROR",
+   "expected_rule": "Simplifying a side must not change its value",
+   "explanation": "Step 3 changes the value of the right-hand side: 15 - 5 was not simplified correctly.",
+   "hint": "Work out 15 - 5 again, one operation at a time.",
+   "hint_level": 2,
+   "max_hint_level": 3,
+   "reveal_answer": false,
+   "revealed_step": null,
+   "revealed_explanation": null,
+   "attempt_feedback": null,
+   "final_solution": null,
+   "complete_answer_step": null,
+   "removed_steps": [],
+   "progress": [],
+   "progress_token": "7ff0d0065eff0af00af737f36a5da8c436bc9531eb6ad2540d24866babbcee07"
+  },
+  "full": null
+ },
+ "reveal": {
+  "mode": "GUIDED",
+  "status": "NEEDS_ATTEMPT",
+  "message": "Step 3 is the first incorrect step. Try rewriting it.",
+  "first_error_step": 3,
+  "guided": {
+   "phase": "FIX_ERROR",
+   "error_step": "2x = 20",
+   "current_step": "2x = 15 - 5",
+   "step_number": 3,
+   "error_category": "ADDITION_SUBTRACTION_ERROR",
+   "expected_rule": "Simplifying a side must not change its value",
+   "explanation": "Step 3 changes the value of the right-hand side: 15 - 5 was not simplified correctly.",
+   "hint": "The next step is: 2x = 10",
+   "hint_level": 3,
+   "max_hint_level": 3,
+   "reveal_answer": true,
+   "revealed_step": "2x = 10",
+   "revealed_explanation": "Keep the left-hand side and simplify the right-hand side correctly: 15 - 5 = 10.",
+   "attempt_feedback": null,
+   "final_solution": null,
+   "complete_answer_step": null,
+   "removed_steps": [],
+   "progress": [],
+   "progress_token": "7ff0d0065eff0af00af737f36a5da8c436bc9531eb6ad2540d24866babbcee07"
+  },
+  "full": null
+ },
+ "rejected": {
+  "mode": "GUIDED",
+  "status": "REJECTED",
+  "message": "Not quite — that step changes the solutions.",
+  "first_error_step": 3,
+  "guided": {
+   "phase": "FIX_ERROR",
+   "error_step": "2x = 20",
+   "current_step": "2x = 15 - 5",
+   "step_number": 3,
+   "error_category": "ADDITION_SUBTRACTION_ERROR",
+   "expected_rule": "Simplifying a side must not change its value",
+   "explanation": "Step 3 changes the value of the right-hand side: 15 - 5 was not simplified correctly.",
+   "hint": "Re-check the arithmetic on the right-hand side.",
+   "hint_level": 1,
+   "max_hint_level": 3,
+   "reveal_answer": false,
+   "revealed_step": null,
+   "revealed_explanation": null,
+   "attempt_feedback": {
+    "valid": false,
+    "message": "Step 3 changes the value of the right-hand side: 15 - 5 was not simplified correctly.",
+    "reason_code": "SOLUTIONS_CHANGED",
+    "error_category": "ADDITION_SUBTRACTION_ERROR",
+    "error_code": null,
+    "lost_solutions": [
+     "5"
+    ],
+    "extraneous_solutions": [
+     "11/2"
+    ]
+   },
+   "final_solution": null,
+   "complete_answer_step": null,
+   "removed_steps": [],
+   "progress": [],
+   "progress_token": "7ff0d0065eff0af00af737f36a5da8c436bc9531eb6ad2540d24866babbcee07"
+  },
+  "full": null
+ },
+ "accepted": {
+  "mode": "GUIDED",
+  "status": "ACCEPTED",
+  "message": "Correct! Add this step to your work and continue.",
+  "first_error_step": 3,
+  "guided": {
+   "phase": "FIX_ERROR",
+   "error_step": "2x = 20",
+   "current_step": "2x = 10",
+   "step_number": 4,
+   "error_category": null,
+   "expected_rule": "Divide both sides by the same nonzero number",
+   "explanation": null,
+   "hint": "Make the coefficient of x equal to 1.",
+   "hint_level": 1,
+   "max_hint_level": 3,
+   "reveal_answer": false,
+   "revealed_step": null,
+   "revealed_explanation": null,
+   "attempt_feedback": {
+    "valid": true,
+    "message": "This step is a valid transformation.",
+    "reason_code": null,
+    "error_category": null,
+    "error_code": null,
+    "lost_solutions": [],
+    "extraneous_solutions": []
+   },
+   "final_solution": null,
+   "complete_answer_step": null,
+   "removed_steps": [],
+   "progress": [
+    "2x = 10"
+   ],
+   "progress_token": "1c74bbf1759fdbfbc85ce889b45dd62cd8f91333fef93c6cf5f504323cb46e57"
+  },
+  "full": null
+ },
+ "solved": {
+  "mode": "GUIDED",
+  "status": "SOLVED",
+  "message": "Correct — and your answer is complete!",
+  "first_error_step": 3,
+  "guided": {
+   "phase": "CONTINUE",
+   "error_step": "2x = 20",
+   "current_step": "x = 5",
+   "step_number": 4,
+   "error_category": null,
+   "expected_rule": null,
+   "explanation": null,
+   "hint": null,
+   "hint_level": 1,
+   "max_hint_level": 3,
+   "reveal_answer": false,
+   "revealed_step": null,
+   "revealed_explanation": null,
+   "attempt_feedback": {
+    "valid": true,
+    "message": "This step is valid and states every solution.",
+    "reason_code": null,
+    "error_category": null,
+    "error_code": null,
+    "lost_solutions": [],
+    "extraneous_solutions": []
+   },
+   "final_solution": {
+    "type": "FINITE_SET",
+    "values": [
+     "5"
+    ],
+    "latex": [
+     "5"
+    ]
+   },
+   "complete_answer_step": null,
+   "removed_steps": [],
+   "progress": [
+    "2x = 10",
+    "x = 5"
+   ],
+   "progress_token": "8d916d58431ff5fbfd7c498cb2eed058d03d177bb1fdda16a481ea3cc27023e9"
+  },
+  "full": null
+ }
+}

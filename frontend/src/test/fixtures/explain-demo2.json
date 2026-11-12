@@ -1,0 +1,15 @@
+{
+ "source": "LLM",
+ "ai_status": null,
+ "overall_status": "INCORRECT",
+ "first_error_step": 3,
+ "error_category": "ADDITION_SUBTRACTION_ERROR",
+ "expected_rule": "Simplifying a side must not change its value",
+ "corrected_step": "2x = 10",
+ "suggested_next_step": "x = 5",
+ "correction_action": "REPLACE_STEP",
+ "explanation": "Step 3 changes the value of the right-hand side: 15 - 5 was not simplified correctly.",
+ "why_invalid": "Rule: Simplifying a side must not change its value.",
+ "how_to_avoid": "Step 2 has solution set {5}, but step 3 has {10}. Lost: x = 5. Added: x = 10.",
+ "learning_tip": "Check each step by asking whether it keeps exactly the same solutions."
+}

@@ -1,0 +1,52 @@
+{
+ "request_id": "f30f5e8f-cf50-40d7-a0ea-94cdf5bbfce5",
+ "question": "2x + 5 = 15",
+ "variable": "x",
+ "steps": [
+  {
+   "step_number": 1,
+   "expression": "2x + 5 = 15",
+   "latex": "2 x + 5 = 15",
+   "confidence": 0.97,
+   "needs_review": false,
+   "review_reasons": [],
+   "parse_error_code": null
+  },
+  {
+   "step_number": 2,
+   "expression": "2x = 15 - 5",
+   "latex": "2 x = 15 - 5",
+   "confidence": 0.97,
+   "needs_review": false,
+   "review_reasons": [],
+   "parse_error_code": null
+  },
+  {
+   "step_number": 3,
+   "expression": "2x = 20",
+   "latex": "2 x = 20",
+   "confidence": 0.97,
+   "needs_review": false,
+   "review_reasons": [],
+   "parse_error_code": null
+  },
+  {
+   "step_number": 4,
+   "expression": "x = 10",
+   "latex": "x = 10",
+   "confidence": 0.72,
+   "needs_review": true,
+   "review_reasons": [
+    "The last digit is faint (stub transcription).",
+    "Low transcription confidence (0.72)."
+   ],
+   "parse_error_code": null
+  }
+ ],
+ "status": "REVIEW_REQUIRED",
+ "warnings": [],
+ "image": {
+  "width": 1400,
+  "height": 600
+ }
+}

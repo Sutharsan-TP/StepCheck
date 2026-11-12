@@ -1,0 +1,70 @@
+{
+ "mode": "FULL",
+ "status": "CORRECTED",
+ "message": "Your solution was already complete at step 3 (x = 5). Remove step 4 — it is not needed.",
+ "first_error_step": 4,
+ "guided": null,
+ "full": {
+  "action": "REMOVE_REMAINING_STEPS",
+  "complete_answer_step": 3,
+  "removed_steps": [
+   {
+    "step_number": 4,
+    "text": "x = 10",
+    "status": "FIRST_INVALID",
+    "kind": "INCORRECT",
+    "reason": "This step changes the solutions of the equation."
+   }
+  ],
+  "original_step": "x = 10",
+  "error_category": "ADDITION_SUBTRACTION_ERROR",
+  "expected_rule": "Simplifying a side must not change its value",
+  "explanation": "Step 4 changes the value of the right-hand side: 5 was not simplified correctly.",
+  "evidence": "Step 3 has solution set {5}, but step 4 has {10}. Lost: x = 5. Added: x = 10.",
+  "corrected_step": null,
+  "continuation": [],
+  "corrected_solution": [
+   {
+    "step_number": 1,
+    "text": "2x + 5 = 15",
+    "latex": "2 x + 5 = 15",
+    "source": "STUDENT",
+    "rule": null,
+    "rule_name": null,
+    "explanation": null
+   },
+   {
+    "step_number": 2,
+    "text": "2x = 10",
+    "latex": "2 x = 10",
+    "source": "STUDENT",
+    "rule": null,
+    "rule_name": null,
+    "explanation": null
+   },
+   {
+    "step_number": 3,
+    "text": "x = 5",
+    "latex": "x = 5",
+    "source": "STUDENT",
+    "rule": null,
+    "rule_name": null,
+    "explanation": null
+   }
+  ],
+  "final_solution": {
+   "type": "FINITE_SET",
+   "values": [
+    "5"
+   ],
+   "latex": [
+    "5"
+   ]
+  },
+  "verification": {
+   "overall_status": "CORRECT",
+   "all_transitions_valid": true,
+   "solution_complete": true
+  }
+ }
+}
