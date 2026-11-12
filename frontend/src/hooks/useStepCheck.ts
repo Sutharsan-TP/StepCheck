@@ -24,6 +24,9 @@ export function useStepCheck() {
       router.push("/results");
     } catch (e) {
       setError(describeError(e));
+    } finally {
+      // Cache Components keeps this page's state alive after navigating away,
+      // so the flag must be cleared on success too or the button stays stuck.
       setVerifying(false);
     }
   }
