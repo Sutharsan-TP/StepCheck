@@ -1,0 +1,1781 @@
+{
+  "components": {
+    "schemas": {
+      "AttemptFeedbackOut": {
+        "properties": {
+          "error_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Category"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "extraneous_solutions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Extraneous Solutions",
+            "type": "array"
+          },
+          "lost_solutions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Lost Solutions",
+            "type": "array"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          },
+          "valid": {
+            "title": "Valid",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "valid",
+          "message",
+          "reason_code",
+          "error_category",
+          "error_code",
+          "lost_solutions",
+          "extraneous_solutions"
+        ],
+        "title": "AttemptFeedbackOut",
+        "type": "object"
+      },
+      "Body_transcribe_api_v1_transcribe_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_transcribe_api_v1_transcribe_post",
+        "type": "object"
+      },
+      "CorrectRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attempt"
+          },
+          "domain": {
+            "const": "REAL",
+            "default": "REAL",
+            "title": "Domain",
+            "type": "string"
+          },
+          "hint_level": {
+            "default": 1,
+            "maximum": 3.0,
+            "minimum": 1.0,
+            "title": "Hint Level",
+            "type": "integer"
+          },
+          "mode": {
+            "enum": [
+              "GUIDED",
+              "FULL"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "progress": {
+            "items": {
+              "maxLength": 200,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Progress",
+            "type": "array"
+          },
+          "progress_token": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Progress Token"
+          },
+          "steps": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                "maxItems": 30,
+                "minItems": 2,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Steps"
+          },
+          "variable": {
+            "const": "x",
+            "default": "x",
+            "title": "Variable",
+            "type": "string"
+          },
+          "verification_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Id"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "CorrectRequest",
+        "type": "object"
+      },
+      "CorrectResponse": {
+        "properties": {
+          "first_error_step": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Error Step"
+          },
+          "full": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FullCorrectionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "guided": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GuidedCorrectionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "GUIDED",
+              "FULL"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode",
+          "status",
+          "message",
+          "first_error_step"
+        ],
+        "title": "CorrectResponse",
+        "type": "object"
+      },
+      "CorrectionStepOut": {
+        "properties": {
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation"
+          },
+          "latex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latex"
+          },
+          "rule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule"
+          },
+          "rule_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Name"
+          },
+          "source": {
+            "enum": [
+              "STUDENT",
+              "CORRECTED",
+              "GENERATED"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "step_number": {
+            "title": "Step Number",
+            "type": "integer"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step_number",
+          "text",
+          "latex",
+          "source",
+          "rule",
+          "rule_name",
+          "explanation"
+        ],
+        "title": "CorrectionStepOut",
+        "type": "object"
+      },
+      "CorrectionVerificationOut": {
+        "properties": {
+          "all_transitions_valid": {
+            "title": "All Transitions Valid",
+            "type": "boolean"
+          },
+          "overall_status": {
+            "title": "Overall Status",
+            "type": "string"
+          },
+          "solution_complete": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Solution Complete"
+          }
+        },
+        "required": [
+          "overall_status",
+          "all_transitions_valid",
+          "solution_complete"
+        ],
+        "title": "CorrectionVerificationOut",
+        "type": "object"
+      },
+      "ExplainRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "domain": {
+            "const": "REAL",
+            "default": "REAL",
+            "title": "Domain",
+            "type": "string"
+          },
+          "steps": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                "maxItems": 30,
+                "minItems": 2,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Steps"
+          },
+          "variable": {
+            "const": "x",
+            "default": "x",
+            "title": "Variable",
+            "type": "string"
+          },
+          "verification_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Id"
+          }
+        },
+        "title": "ExplainRequest",
+        "type": "object"
+      },
+      "ExplainResponse": {
+        "properties": {
+          "ai_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Status"
+          },
+          "corrected_step": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corrected Step"
+          },
+          "correction_action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correction Action"
+          },
+          "error_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Category"
+          },
+          "expected_rule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Rule"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "first_error_step": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Error Step"
+          },
+          "how_to_avoid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "How To Avoid"
+          },
+          "learning_tip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Learning Tip"
+          },
+          "overall_status": {
+            "title": "Overall Status",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "LLM",
+              "TEMPLATE",
+              "ENGINE"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "suggested_next_step": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggested Next Step"
+          },
+          "why_invalid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Why Invalid"
+          }
+        },
+        "required": [
+          "source",
+          "ai_status",
+          "overall_status",
+          "first_error_step",
+          "error_category",
+          "expected_rule",
+          "corrected_step",
+          "suggested_next_step",
+          "correction_action",
+          "explanation",
+          "why_invalid",
+          "how_to_avoid",
+          "learning_tip"
+        ],
+        "title": "ExplainResponse",
+        "type": "object"
+      },
+      "FinalAnswerStatus": {
+        "enum": [
+          "SOLVED",
+          "NOT_ISOLATED",
+          "UNVERIFIABLE"
+        ],
+        "title": "FinalAnswerStatus",
+        "type": "string"
+      },
+      "FullCorrectionOut": {
+        "properties": {
+          "action": {
+            "enum": [
+              "NONE",
+              "REPLACE_STEP",
+              "COMPLETE_SOLUTION",
+              "REMOVE_REMAINING_STEPS"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "complete_answer_step": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Complete Answer Step"
+          },
+          "continuation": {
+            "items": {
+              "$ref": "#/components/schemas/CorrectionStepOut"
+            },
+            "title": "Continuation",
+            "type": "array"
+          },
+          "corrected_solution": {
+            "items": {
+              "$ref": "#/components/schemas/CorrectionStepOut"
+            },
+            "title": "Corrected Solution",
+            "type": "array"
+          },
+          "corrected_step": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CorrectionStepOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Category"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence"
+          },
+          "expected_rule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Rule"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation"
+          },
+          "final_solution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SolutionSetOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "original_step": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Step"
+          },
+          "removed_steps": {
+            "items": {
+              "$ref": "#/components/schemas/RemovedStepOut"
+            },
+            "title": "Removed Steps",
+            "type": "array"
+          },
+          "verification": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CorrectionVerificationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "action",
+          "complete_answer_step",
+          "removed_steps",
+          "original_step",
+          "error_category",
+          "expected_rule",
+          "explanation",
+          "evidence",
+          "corrected_step",
+          "continuation",
+          "corrected_solution",
+          "final_solution",
+          "verification"
+        ],
+        "title": "FullCorrectionOut",
+        "type": "object"
+      },
+      "GuidedCorrectionOut": {
+        "properties": {
+          "attempt_feedback": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AttemptFeedbackOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "complete_answer_step": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Complete Answer Step"
+          },
+          "current_step": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Step"
+          },
+          "error_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Category"
+          },
+          "error_step": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Step"
+          },
+          "expected_rule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Rule"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation"
+          },
+          "final_solution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SolutionSetOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hint"
+          },
+          "hint_level": {
+            "title": "Hint Level",
+            "type": "integer"
+          },
+          "max_hint_level": {
+            "default": 3,
+            "title": "Max Hint Level",
+            "type": "integer"
+          },
+          "phase": {
+            "anyOf": [
+              {
+                "enum": [
+                  "FIX_ERROR",
+                  "CONTINUE"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phase"
+          },
+          "progress": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Progress",
+            "type": "array"
+          },
+          "progress_token": {
+            "title": "Progress Token",
+            "type": "string"
+          },
+          "removed_steps": {
+            "items": {
+              "$ref": "#/components/schemas/RemovedStepOut"
+            },
+            "title": "Removed Steps",
+            "type": "array"
+          },
+          "reveal_answer": {
+            "title": "Reveal Answer",
+            "type": "boolean"
+          },
+          "revealed_explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revealed Explanation"
+          },
+          "revealed_step": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revealed Step"
+          },
+          "step_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Step Number"
+          }
+        },
+        "required": [
+          "phase",
+          "error_step",
+          "current_step",
+          "step_number",
+          "error_category",
+          "expected_rule",
+          "explanation",
+          "hint",
+          "hint_level",
+          "reveal_answer",
+          "revealed_step",
+          "revealed_explanation",
+          "attempt_feedback",
+          "final_solution",
+          "complete_answer_step",
+          "removed_steps",
+          "progress",
+          "progress_token"
+        ],
+        "title": "GuidedCorrectionOut",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "ImageInfo": {
+        "properties": {
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "width",
+          "height"
+        ],
+        "title": "ImageInfo",
+        "type": "object"
+      },
+      "OverallStatus": {
+        "enum": [
+          "CORRECT",
+          "INCORRECT",
+          "INCOMPLETE",
+          "UNSUPPORTED",
+          "NEEDS_REVIEW"
+        ],
+        "title": "OverallStatus",
+        "type": "string"
+      },
+      "RemovedStepOut": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "INCORRECT",
+              "UNNECESSARY",
+              "UNVERIFIABLE"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StepStatus"
+          },
+          "step_number": {
+            "title": "Step Number",
+            "type": "integer"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step_number",
+          "text",
+          "status",
+          "kind",
+          "reason"
+        ],
+        "title": "RemovedStepOut",
+        "type": "object"
+      },
+      "SolutionKind": {
+        "enum": [
+          "ALL_REAL",
+          "EMPTY",
+          "FINITE_SET"
+        ],
+        "title": "SolutionKind",
+        "type": "string"
+      },
+      "SolutionSetOut": {
+        "properties": {
+          "latex": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Latex",
+            "type": "array"
+          },
+          "type": {
+            "$ref": "#/components/schemas/SolutionKind"
+          },
+          "values": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Values",
+            "type": "array"
+          }
+        },
+        "required": [
+          "type",
+          "values",
+          "latex"
+        ],
+        "title": "SolutionSetOut",
+        "type": "object"
+      },
+      "StepError": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "category",
+          "message"
+        ],
+        "title": "StepError",
+        "type": "object"
+      },
+      "StepOut": {
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StepError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "input": {
+            "title": "Input",
+            "type": "string"
+          },
+          "latex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latex"
+          },
+          "normalized": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Normalized"
+          },
+          "solution_set": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SolutionSetOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "solved_form": {
+            "title": "Solved Form",
+            "type": "boolean"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StepStatus"
+          },
+          "step": {
+            "title": "Step",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "step",
+          "input",
+          "status",
+          "latex",
+          "normalized",
+          "solution_set",
+          "solved_form",
+          "error"
+        ],
+        "title": "StepOut",
+        "type": "object"
+      },
+      "StepStatus": {
+        "enum": [
+          "VALID",
+          "FIRST_INVALID",
+          "DOWNSTREAM_DEPENDENT",
+          "UNSUPPORTED",
+          "NEEDS_REVIEW"
+        ],
+        "title": "StepStatus",
+        "type": "string"
+      },
+      "TranscribedStep": {
+        "properties": {
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "expression": {
+            "title": "Expression",
+            "type": "string"
+          },
+          "latex": {
+            "title": "Latex",
+            "type": "string"
+          },
+          "needs_review": {
+            "title": "Needs Review",
+            "type": "boolean"
+          },
+          "parse_error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parse Error Code"
+          },
+          "review_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Review Reasons",
+            "type": "array"
+          },
+          "step_number": {
+            "title": "Step Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "step_number",
+          "expression",
+          "latex",
+          "confidence",
+          "needs_review",
+          "review_reasons",
+          "parse_error_code"
+        ],
+        "title": "TranscribedStep",
+        "type": "object"
+      },
+      "TranscriptionResponse": {
+        "properties": {
+          "image": {
+            "$ref": "#/components/schemas/ImageInfo"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "REVIEW_REQUIRED",
+            "default": "REVIEW_REQUIRED",
+            "title": "Status",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/TranscribedStep"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "variable": {
+            "title": "Variable",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "request_id",
+          "question",
+          "variable",
+          "steps",
+          "warnings",
+          "image"
+        ],
+        "title": "TranscriptionResponse",
+        "type": "object"
+      },
+      "TransitionOut": {
+        "properties": {
+          "compared_to_step": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compared To Step"
+          },
+          "extraneous_solutions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Extraneous Solutions",
+            "type": "array"
+          },
+          "from_step": {
+            "title": "From Step",
+            "type": "integer"
+          },
+          "locally_valid": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locally Valid"
+          },
+          "lost_solutions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Lost Solutions",
+            "type": "array"
+          },
+          "matches_original": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matches Original"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StepStatus"
+          },
+          "to_step": {
+            "title": "To Step",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "from_step",
+          "to_step",
+          "status",
+          "reason_code",
+          "compared_to_step",
+          "locally_valid",
+          "matches_original",
+          "lost_solutions",
+          "extraneous_solutions"
+        ],
+        "title": "TransitionOut",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "VerifyRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "domain": {
+            "const": "REAL",
+            "default": "REAL",
+            "title": "Domain",
+            "type": "string"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "steps": {
+            "items": {
+              "maxLength": 200,
+              "type": "string"
+            },
+            "maxItems": 30,
+            "minItems": 2,
+            "title": "Steps",
+            "type": "array"
+          },
+          "variable": {
+            "const": "x",
+            "default": "x",
+            "title": "Variable",
+            "type": "string"
+          }
+        },
+        "required": [
+          "steps"
+        ],
+        "title": "VerifyRequest",
+        "type": "object"
+      },
+      "VerifyResponse": {
+        "properties": {
+          "complete_answer_step": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Complete Answer Step"
+          },
+          "correct_solution": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correct Solution"
+          },
+          "correct_solution_set": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SolutionSetOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "extraneous_solutions": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extraneous Solutions"
+          },
+          "final_answer_correct": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Answer Correct"
+          },
+          "final_answer_status": {
+            "$ref": "#/components/schemas/FinalAnswerStatus"
+          },
+          "first_error_step": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Error Step"
+          },
+          "missing_solutions": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Missing Solutions"
+          },
+          "overall_status": {
+            "$ref": "#/components/schemas/OverallStatus"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "solution_complete": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Solution Complete"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/StepOut"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "submitted_solution": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted Solution"
+          },
+          "submitted_solution_set": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SolutionSetOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "transitions": {
+            "items": {
+              "$ref": "#/components/schemas/TransitionOut"
+            },
+            "title": "Transitions",
+            "type": "array"
+          },
+          "verification_id": {
+            "title": "Verification Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "verification_id",
+          "overall_status",
+          "first_error_step",
+          "complete_answer_step",
+          "steps",
+          "transitions",
+          "correct_solution",
+          "correct_solution_set",
+          "submitted_solution",
+          "submitted_solution_set",
+          "final_answer_status",
+          "final_answer_correct",
+          "solution_complete",
+          "missing_solutions",
+          "extraneous_solutions"
+        ],
+        "title": "VerifyResponse",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "StepCheck API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/correct": {
+      "post": {
+        "operationId": "correct_api_v1_correct_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrectResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Correct",
+        "tags": [
+          "correction"
+        ]
+      }
+    },
+    "/api/v1/explain": {
+      "post": {
+        "operationId": "explain_api_v1_explain_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExplainRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExplainResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Explain",
+        "tags": [
+          "explanation"
+        ]
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Health Api V1 Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/api/v1/transcribe": {
+      "post": {
+        "operationId": "transcribe_api_v1_transcribe_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_transcribe_api_v1_transcribe_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Transcribe",
+        "tags": [
+          "transcription"
+        ]
+      }
+    },
+    "/api/v1/verify": {
+      "post": {
+        "operationId": "verify_api_v1_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Verify",
+        "tags": [
+          "verification"
+        ]
+      }
+    }
+  }
+}
