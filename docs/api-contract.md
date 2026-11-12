@@ -17,7 +17,18 @@ Every error response has the same shape:
 | 422 | `INVALID_REQUEST` | The request didn't validate: a malformed UUID, an unknown field, a limit exceeded, or `progress` sent without a token. |
 | 422 | `PROGRESS_TOKEN_INVALID` | `progress_token` doesn't match these steps and this progress. |
 | 422 | `INVALID_PROGRESS` | `progress` failed re-verification on the server. |
+| 400 | `INVALID_IMAGE`, `IMAGE_DIMENSIONS_UNSUPPORTED` | The upload is empty, corrupt, or smaller than 64 px or larger than 8000 px on a side. |
+| 413 | `IMAGE_TOO_LARGE` | The upload is larger than 5 MB, or decodes to too many pixels. |
+| 415 | `UNSUPPORTED_IMAGE_TYPE` | The file's contents aren't JPEG, PNG or WebP. The filename and declared type are ignored. |
+| 429 | `RATE_LIMITED` | Too many requests from this client. A `Retry-After` header says how many seconds to wait. |
+| 429 | `AI_RATE_LIMITED` | The AI provider is still rate-limiting after the server's retries. |
+| 502 | `AI_PROVIDER_ERROR`, `AI_MALFORMED_RESPONSE` | The AI provider failed, timed out, or returned unusable output. |
+| 503 | `AI_UNAVAILABLE` | No API key or model is configured, the credentials were rejected, or no model is available. |
 | 500 | `INTERNAL_ERROR` | An unexpected server error. No internal details are included. |
+
+### Rate limits
+
+Each client IP has a per-endpoint token bucket. Defaults per minute: `/transcribe` 10, `/explain` 30, `/verify` 120, `/correct` 120. All four can be set through `RATE_LIMIT_*_PER_MINUTE`. Limits are kept in memory per server process. `X-Forwarded-For` is only used when `TRUST_PROXY=true`.
 
 Requests that contain unknown fields are rejected. This means a client can't send its own correctness claims, such as `"status": "VALID"`.
 
@@ -142,3 +153,65 @@ On every request, the server:
 - Ignores correctness claims from the client. Requests with unknown fields are rejected.
 
 Tokens are signed with `PROGRESS_TOKEN_SECRET`. If that variable isn't set, a random secret is created when the server starts, so tokens stop working after a restart, just like stored verifications.
+
+## `POST /transcribe`
+
+Reads a photo of handwritten working. The request is `multipart/form-data` with a single field, `file`, which must be a JPEG, PNG or WebP of at most 5 MB.
+
+The response always has `status: "REVIEW_REQUIRED"`. Transcription never triggers verification: the student must review the lines and confirm them, and the client then sends them to `/verify`.
+
+```json
+{
+  "request_id": "uuid",
+  "question": "2x + 5 = 15",
+  "variable": "x",
+  "status": "REVIEW_REQUIRED",
+  "warnings": [],
+  "image": { "width": 1400, "height": 600 },
+  "steps": [
+    {
+      "step_number": 1,
+      "expression": "2x + 5 = 15",
+      "latex": "2 x + 5 = 15",
+      "confidence": 0.97,
+      "needs_review": false,
+      "review_reasons": [],
+      "parse_error_code": null
+    }
+  ]
+}
+```
+
+The vision model is told to transcribe exactly: not to solve, correct, simplify, reorder or fill in steps. The server then checks every line itself:
+- It runs each line through StepCheck's parser. A line that doesn't parse gets `needs_review` set, with the parser's message added to `review_reasons`.
+- The LaTeX returned is the server's own rendering of the exact text.
+- A line also needs review if its confidence is below 0.8 or the model flagged it as ambiguous.
+- At most 30 lines are kept, and a variable other than `x` produces a warning.
+
+## `POST /explain`
+
+Request: `{"verification_id": "uuid"}` or `{"steps": [...]}`, with optional `variable` and `domain`. The client never sends a verification result. The server checks the steps itself every time.
+
+Response:
+
+| Field | Filled in by |
+|---|---|
+| `overall_status`, `first_error_step`, `error_category`, `expected_rule`, `corrected_step`, `suggested_next_step`, `correction_action` | Always the engine |
+| `explanation`, `why_invalid`, `how_to_avoid`, `learning_tip` | The text model, or a deterministic template |
+| `source` | Where the prose came from (see below) |
+| `ai_status` | Why the template was used, when it was |
+
+`source` is one of:
+- `LLM`: AI-written prose that passed the server's checks.
+- `TEMPLATE`: deterministic text, used when the AI is unavailable or its output was rejected. `ai_status` then holds a code such as `AI_UNAVAILABLE` or `REJECTED_BY_GUARD`.
+- `ENGINE`: no AI was called at all. This happens for correct, unsupported or unverifiable work, and whenever no verified correction exists.
+
+AI-written prose is rejected when it calls the work correct although the engine found a mistake, or when it contains a number that isn't in the verified facts.
+
+## Offline AI stub (local demos and tests only)
+
+`STEPCHECK_STUB_AI=true` replaces OpenRouter with a deterministic in-process stub.
+- `/transcribe` recognises the bundled samples in `examples/handwritten_samples/` and returns their exact lines, with the last line flagged for review. Any other image comes back as unreadable.
+- `/explain` restates the engine's facts as plain prose.
+
+Never enable it in production.
