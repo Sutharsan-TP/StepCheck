@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f6f2;
+  --foreground: #1b1e25;
+  --card: #ffffff;
+  --border: #e3e0d8;
+  --muted: #646b78;
+  --muted-strong: #3b414c;
+  --muted-surface: #efede7;
+  --primary: #1e3a8a;
+  --primary-foreground: #ffffff;
+  --primary-soft: #e8edfb;
+
+  /* Verification status colours */
+  --valid: #15803d;
+  --valid-soft: #e7f5ec;
+  --invalid: #b91c1c;
+  --invalid-soft: #fbeaea;
+  --downstream: #6b7280;
+  --downstream-soft: #eeeff1;
+  --review: #b45309;
+  --review-soft: #fdf1e3;
+  --corrected: #1d4ed8;
+  --corrected-soft: #e8eefc;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #111318;
+    --foreground: #e7e9ee;
+    --card: #181b22;
+    --border: #2b303b;
+    --muted: #9aa1ad;
+    --muted-strong: #c6cad2;
+    --muted-surface: #20242d;
+    --primary: #8fa8ff;
+    --primary-foreground: #0d1220;
+    --primary-soft: #1c2440;
+    --valid: #4ade80;
+    --valid-soft: #13261b;
+    --invalid: #f87171;
+    --invalid-soft: #2c1517;
+    --downstream: #9ca3af;
+    --downstream-soft: #22252c;
+    --review: #fbbf24;
+    --review-soft: #2b2112;
+    --corrected: #93b4ff;
+    --corrected-soft: #18213a;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-muted-strong: var(--muted-strong);
+  --color-muted-surface: var(--muted-surface);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-valid: var(--valid);
+  --color-valid-soft: var(--valid-soft);
+  --color-invalid: var(--invalid);
+  --color-invalid-soft: var(--invalid-soft);
+  --color-downstream: var(--downstream);
+  --color-downstream-soft: var(--downstream-soft);
+  --color-review: var(--review);
+  --color-review-soft: var(--review-soft);
+  --color-corrected: var(--corrected);
+  --color-corrected-soft: var(--corrected-soft);
+  --font-sans: var(--font-sans-face), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-serif-face), Georgia, serif;
+  --font-mono: var(--font-mono-face), ui-monospace, monospace;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.math .katex {
+  font-size: 1.12em;
+}
+
+.math .katex-error {
+  color: var(--muted) !important;
+}
