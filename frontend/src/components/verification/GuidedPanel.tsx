@@ -147,7 +147,7 @@ export function GuidedPanel({ work }: { work: WorkRef }) {
           {guided?.phase === "FIX_ERROR" ? `Fix step ${guided.step_number}` : solved ? "Finished" : `Write step ${guided?.step_number}`}
         </p>
         <div className="rounded-md border border-border bg-muted-surface px-4 py-3">
-          <p className="text-xs text-muted">Continue from</p>
+          <p className="text-xs text-muted">{solved ? "Final step" : "Continue from"}</p>
           {guided?.current_step && <MathText latex={textToLatex(guided.current_step)} label={guided.current_step} className="text-lg" />}
         </div>
         {guided?.phase === "FIX_ERROR" && guided.error_step && progress.length === 0 && (

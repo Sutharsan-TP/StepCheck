@@ -11,7 +11,7 @@ import { textToLatex } from "@/lib/math-renderer";
 import type { TranscriptionResponse } from "@/lib/types";
 import { cn, MAX_STEP_LENGTH, MAX_STEPS, MIN_STEPS } from "@/lib/utils";
 
-type ReviewRow = { id: string; text: string; flagged: boolean; reasons: string[]; confidence: number | null; checked: boolean };
+type ReviewRow = { id: string; text: string; flagged: boolean; reasons: string[]; checked: boolean };
 
 let nextId = 0;
 
@@ -21,7 +21,6 @@ function rowsFrom(t: TranscriptionResponse): ReviewRow[] {
     text: s.expression,
     flagged: s.needs_review,
     reasons: s.review_reasons,
-    confidence: s.confidence,
     checked: !s.needs_review,
   }));
 }
@@ -115,10 +114,7 @@ export function TranscriptionReview({
                   <div className="mt-2 ml-10 flex flex-col gap-1.5 text-xs">
                     <p className="flex items-start gap-1.5 text-review">
                       <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-                      <span>
-                        {row.reasons.join(" ") || "Please double-check this line."}
-                        {row.confidence !== null && ` (confidence ${Math.round(row.confidence * 100)}%)`}
-                      </span>
+                      <span>{row.reasons.join(" ") || "Please double-check this line."}</span>
                     </p>
                     <label className="flex items-center gap-2 text-muted-strong">
                       <input
@@ -139,7 +135,7 @@ export function TranscriptionReview({
             className="self-start"
             disabled={rows.length >= MAX_STEPS}
             onClick={() =>
-              setRows((rs) => [...rs, { id: `review-${nextId++}`, text: "", flagged: false, reasons: [], confidence: null, checked: true }])
+              setRows((rs) => [...rs, { id: `review-${nextId++}`, text: "", flagged: false, reasons: [], checked: true }])
             }
           >
             <Plus className="size-4" aria-hidden /> Add a missing line
