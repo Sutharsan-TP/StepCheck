@@ -112,7 +112,12 @@ def verify_calculus(
         return _unverifiable(analyses)
 
     topic: Topic = original.statement.topic
-    checker = _Checker(sandbox or get_sandbox(), mode_for(topic).value, time.monotonic() + budget)
+    sandbox = sandbox or get_sandbox()
+    try:
+        sandbox.ensure_ready()  # a cold start must not eat the request's checking budget
+    except SandboxFailure:
+        logger.exception("Calculus worker could not start")
+    checker = _Checker(sandbox, mode_for(topic).value, time.monotonic() + budget)
 
     step_results: list[StepResult] = []
     transitions: list[TransitionResult] = []

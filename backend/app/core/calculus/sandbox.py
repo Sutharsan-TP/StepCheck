@@ -25,6 +25,7 @@ logger = logging.getLogger("stepcheck.sandbox")
 
 JOB_TIMEOUT_SECONDS = float(os.getenv("CALC_JOB_TIMEOUT_SECONDS", "4"))
 STARTUP_TIMEOUT_SECONDS = 60.0
+MIN_JOB_SECONDS = 0.25
 
 
 class SandboxTimeout(Exception):
@@ -41,9 +42,10 @@ def _sleep_job(seconds: float) -> str:  # used by tests to simulate a runaway co
 
 
 def _jobs() -> dict[str, Callable[..., Any]]:
+    from app.core.calculus.calc_diagnosis import diagnose_texts
     from app.core.calculus.calc_equivalence import compare_texts, expected_answer
 
-    return {"compare": compare_texts, "answer": expected_answer, "sleep": _sleep_job}
+    return {"compare": compare_texts, "answer": expected_answer, "diagnose": diagnose_texts, "sleep": _sleep_job}
 
 
 def _serve(conn) -> None:  # pragma: no cover - runs in the child process
@@ -128,17 +130,34 @@ class Sandbox:
 
     def run(self, name: str, *args: Any, timeout: float = JOB_TIMEOUT_SECONDS, deadline: float | None = None) -> Any:
         """Run a job. ``deadline`` (time.monotonic()) also bounds the wait for a free worker."""
-        wait = None if deadline is None else max(0.0, deadline - time.monotonic())
-        if deadline is not None:
-            timeout = min(timeout, wait)
+        if deadline is not None and deadline - time.monotonic() < MIN_JOB_SECONDS:
+            raise SandboxTimeout()  # out of time: don't start a job only to kill its worker
         try:
-            worker = self._idle.get(timeout=wait)
+            worker = self._idle.get(timeout=None if deadline is None else deadline - time.monotonic())
         except queue.Empty:
             raise SandboxTimeout() from None
         try:
+            # Starting a worker (after a kill, or on first use) is not part of the job's limit.
+            worker._ensure_started()
+            if deadline is not None:
+                timeout = min(timeout, deadline - time.monotonic())
+                if timeout < MIN_JOB_SECONDS:
+                    raise SandboxTimeout()
             return worker.call(name, args, timeout)
         finally:
             self._idle.put(worker)
+
+    def ensure_ready(self) -> None:
+        """Start any idle worker that is not running (e.g. after a kill). Busy workers are left alone."""
+        for _ in self._all:
+            try:
+                worker = self._idle.get_nowait()
+            except queue.Empty:
+                return
+            try:
+                worker._ensure_started()
+            finally:
+                self._idle.put(worker)
 
     def warm_up(self) -> None:
         """Start the workers ahead of the first request (SymPy takes a few seconds to import)."""

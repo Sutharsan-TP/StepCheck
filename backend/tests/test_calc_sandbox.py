@@ -44,3 +44,19 @@ def test_deadline_bounds_the_job(box):
 def test_expired_deadline_fails_fast_without_running(box):
     with pytest.raises(SandboxTimeout):
         box.run("compare", "d/dx(x)", "1", "VALUE", deadline=time.monotonic() - 1)
+
+
+def test_running_out_of_time_does_not_kill_the_worker(box):
+    box.run("compare", "d/dx(x)", "1", "VALUE")  # make sure a worker is running
+    worker = box._all[0]
+    pid = worker._proc.pid
+    for _ in range(3):
+        with pytest.raises(SandboxTimeout):
+            box.run("compare", "d/dx(x)", "1", "VALUE", deadline=time.monotonic() + 0.1)
+    assert worker._proc is not None and worker._proc.pid == pid  # no restart storm
+
+
+def test_worker_startup_does_not_count_against_the_job(box):
+    box._all[0].stop()  # the next job has to start a fresh worker first
+    outcome = box.run("compare", "d/dx(x^2)", "2x", "VALUE", timeout=1)
+    assert outcome.verdict is Verdict.EQUAL
