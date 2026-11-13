@@ -114,6 +114,8 @@ def test_latex_rendering():
         ("lim(x->x, x)", ErrorCode.AMBIGUOUS_EXPRESSION),
         ("[x][0, C]", ErrorCode.AMBIGUOUS_EXPRESSION),
         ("1/0", ErrorCode.DIVISION_BY_ZERO),
+        ("1/(x+1) d/dx(x)", ErrorCode.AMBIGUOUS_EXPRESSION),
+        ("1/2x", ErrorCode.AMBIGUOUS_EXPRESSION),
         ("x == 1", ErrorCode.SYNTAX_ERROR),
         ("__import__('os')", ErrorCode.INVALID_CHARACTER),
         ("x; 1", ErrorCode.INVALID_CHARACTER),

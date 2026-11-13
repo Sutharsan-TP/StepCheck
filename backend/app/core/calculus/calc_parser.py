@@ -132,6 +132,18 @@ def looks_like_calculus(raw: str) -> bool:
     return bool(_TOPIC_HINT.search(raw or ""))
 
 
+def guess_topic(raw: str) -> Topic:
+    """Best guess for a problem line that could not be parsed (used only for labelling)."""
+    text = raw or ""
+    if "d/dx" in text:
+        return Topic.DERIVATIVE
+    if re.search(r"\blim\b", text):
+        return Topic.LIMIT
+    if re.search(r"(∫|\bint)\s*\[", text):
+        return Topic.DEFINITE_INTEGRAL
+    return Topic.INTEGRAL
+
+
 # --------------------------------------------------------------------------- IR
 
 
@@ -289,6 +301,11 @@ def _to_ir(tree: Tree, counter: _Counter, depth: int) -> Node:
         raise _identifier_error(str(kids[0]))
     if kind in ("paren", "sqrt") or kind in _UNARY:
         return Node(kind, sub)
+    if kind == "div" and sub[1].kind == "imul":
+        raise MathInputError(
+            ErrorCode.AMBIGUOUS_EXPRESSION,
+            "Ambiguous division such as '1/2x': add parentheses or '*', e.g. '(1/2)x', '1/2 * x' or '1/(2x)'.",
+        )
     if kind in _BINARY or kind == "imul":
         return Node(kind, sub)
     if kind == "pow":
