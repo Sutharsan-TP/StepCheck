@@ -1,0 +1,15 @@
+{
+  "source": "TEMPLATE",
+  "ai_status": "AI_UNAVAILABLE",
+  "overall_status": "INCORRECT",
+  "first_error_step": 2,
+  "error_category": "PRODUCT_RULE_ERROR",
+  "expected_rule": "Product rule: (fg)' = f'g + fg'",
+  "corrected_step": null,
+  "suggested_next_step": null,
+  "correction_action": null,
+  "explanation": "Step 2 differentiates a product by multiplying the two derivatives together. Step 2 works out to 2*x*cos(x), but it should equal x*(x*cos(x) + 2*sin(x)).",
+  "why_invalid": "Rule: Product rule: (fg)' = f'g + fg'.",
+  "how_to_avoid": "Write it as f'g + fg': differentiate one factor at a time and keep the other unchanged.",
+  "learning_tip": "The derivative of a product is not the product of the derivatives."
+}

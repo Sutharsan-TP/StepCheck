@@ -14,6 +14,7 @@ import { GuidedPanel } from "@/components/verification/GuidedPanel";
 import { ResultBanner } from "@/components/verification/ResultBanner";
 import { SolutionSummary } from "@/components/verification/SolutionSummary";
 import { StepTimeline } from "@/components/verification/StepTimeline";
+import { isCalculus } from "@/components/verification/format";
 import { useStepCheck } from "@/hooks/useStepCheck";
 import { correct, describeError, explain, type WorkRef } from "@/lib/api";
 import { useHydrated, useSession, type Session } from "@/lib/session";
@@ -56,6 +57,8 @@ function Results({ session }: { session: Session & { verification: VerifyRespons
     [verification.verification_id, session.steps],
   );
   const correctWork = verification.overall_status === "CORRECT";
+  // Corrections are algebra-only for now; calculus gets explanations.
+  const calculus = isCalculus(verification.topic);
 
   async function open(next: Panel) {
     setPanel(next);
@@ -77,12 +80,15 @@ function Results({ session }: { session: Session & { verification: VerifyRespons
     }
   }
 
-  const actions: { value: Panel; label: string; Icon: typeof Compass; hint: string }[] = [
+  type Action = { value: Panel; label: string; Icon: typeof Compass; hint: string; disabled?: boolean };
+  const actions: Action[] = ([
     { value: "explain", label: "Explain mistake", Icon: MessageSquareText, hint: "Why the step is wrong" },
     { value: "guided", label: "Guide me through it", Icon: Compass, hint: "Fix it yourself with hints" },
     { value: "correction", label: "Show corrected solution", Icon: BookOpenCheck, hint: "A verified full solution" },
     { value: "compare", label: "Compare my work", Icon: Columns2, hint: "Your steps side by side" },
-  ];
+  ] as Action[]).map((a) =>
+    calculus && a.value !== "explain" ? { ...a, hint: "Coming soon for calculus", disabled: true } : a,
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -125,20 +131,24 @@ function Results({ session }: { session: Session & { verification: VerifyRespons
 
       {correctWork ? (
         <Alert tone="success" title="Nothing to correct">
-          Every transformation keeps exactly the same solutions, and your final answer states all of them.
+          {calculus
+            ? "Every step has the same value as the one before it, and your final answer is fully worked out."
+            : "Every transformation keeps exactly the same solutions, and your final answer states all of them."}
         </Alert>
       ) : (
         <section aria-label="Help with this solution" className="flex flex-col gap-4">
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4" role="group" aria-label="Correction options">
-            {actions.map(({ value, label, Icon, hint }) => (
+            {actions.map(({ value, label, Icon, hint, disabled }) => (
               <button
                 key={value}
                 type="button"
                 aria-pressed={panel === value}
+                disabled={disabled}
                 onClick={() => void open(value)}
                 className={cn(
                   "flex items-start gap-3 rounded-lg border px-4 py-3 text-left transition-colors",
                   "focus-visible:outline-2 focus-visible:outline-primary",
+                  "disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border",
                   panel === value ? "border-primary bg-primary-soft" : "border-border bg-card hover:border-primary/50",
                 )}
               >

@@ -1,0 +1,60 @@
+{
+  "request_id": null,
+  "topic": "INTEGRAL",
+  "overall_status": "INCOMPLETE",
+  "first_error_step": null,
+  "complete_answer_step": null,
+  "steps": [
+    {
+      "step": 1,
+      "input": "int(2x) dx",
+      "status": "VALID",
+      "latex": "\\int 2 x \\, dx",
+      "normalized": "int(2 x) dx",
+      "solution_set": null,
+      "solved_form": false,
+      "error": null
+    },
+    {
+      "step": 2,
+      "input": "x^2",
+      "status": "VALID",
+      "latex": "{x}^{2}",
+      "normalized": "x^2",
+      "solution_set": null,
+      "solved_form": true,
+      "error": null
+    }
+  ],
+  "transitions": [
+    {
+      "from_step": 1,
+      "to_step": 2,
+      "status": "VALID",
+      "reason_code": null,
+      "compared_to_step": 1,
+      "locally_valid": true,
+      "matches_original": null,
+      "lost_solutions": [],
+      "extraneous_solutions": [],
+      "expected_value_latex": null,
+      "found_value_latex": null,
+      "counterexample": null,
+      "note": null
+    }
+  ],
+  "correct_solution": null,
+  "correct_solution_set": null,
+  "submitted_solution": null,
+  "submitted_solution_set": null,
+  "final_answer_status": "SOLVED",
+  "final_answer_correct": false,
+  "solution_complete": false,
+  "missing_solutions": null,
+  "extraneous_solutions": null,
+  "expected_answer": "x^2 + C",
+  "expected_answer_latex": "x^{2} + C",
+  "missing_constant": true,
+  "notes": [],
+  "verification_id": "00000000-0000-4000-8000-00000000c41c"
+}

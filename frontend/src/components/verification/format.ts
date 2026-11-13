@@ -10,7 +10,22 @@ export const REASON_LABELS: Record<string, string> = {
   AMBIGUOUS_ERROR_LOCATION: "Something changed after a step StepCheck couldn't check, so the exact mistake can't be pinpointed.",
   AFTER_UNRESOLVED_STEP: "Comes after a problem StepCheck couldn't locate.",
   NO_VERIFIED_REFERENCE: "The problem itself couldn't be checked.",
+  NOT_EQUAL: "This step doesn't have the same value as the step before it.",
+  DIFFERS_BY_NON_CONSTANT: "This differs from the step before by more than a constant, so it isn't the same integral.",
+  CANNOT_DECIDE: "StepCheck couldn't decide whether this step equals the one before it.",
+  UNDEFINED: "A value or limit here is undefined (for example a two-sided limit that doesn't exist).",
+  TIMEOUT: "This step took too long to check.",
 };
+
+export const TOPIC_LABELS: Record<string, string> = {
+  ALGEBRA: "Equation",
+  DERIVATIVE: "Derivative",
+  INTEGRAL: "Indefinite integral",
+  DEFINITE_INTEGRAL: "Definite integral",
+  LIMIT: "Limit",
+};
+
+export const isCalculus = (topic: string | null | undefined) => Boolean(topic && topic !== "ALGEBRA");
 
 export const CATEGORY_LABELS: Record<string, string> = {
   ADDITION_SUBTRACTION_ERROR: "Addition or subtraction slip",
@@ -27,6 +42,21 @@ export const CATEGORY_LABELS: Record<string, string> = {
   INCOMPLETE_FINAL_ANSWER: "Incomplete answer",
   EXTRANEOUS_SOLUTIONS: "Extra solutions introduced",
   INCORRECT_FINAL_ANSWER: "Incorrect final answer",
+  PRODUCT_RULE_ERROR: "Product rule",
+  QUOTIENT_RULE_ERROR: "Quotient rule",
+  CHAIN_RULE_ERROR: "Chain rule",
+  POWER_RULE_ERROR: "Power rule",
+  TRIG_DERIVATIVE_SIGN_ERROR: "Sign of a trig derivative",
+  INTEGRAL_POWER_RULE_ERROR: "Power rule for integrals",
+  INTEGRAL_COEFFICIENT_ERROR: "Dividing by the inner coefficient",
+  INTEGRAL_TRIG_SIGN_ERROR: "Sign of a trig integral",
+  LIMITS_SWAPPED: "Limits of integration swapped",
+  EVALUATION_ERROR: "Substituting the limits",
+  LHOPITAL_NOT_APPLICABLE: "L'Hôpital's rule used when it doesn't apply",
+  LHOPITAL_QUOTIENT_ERROR: "L'Hôpital's rule applied as the quotient rule",
+  SIMPLIFICATION_ERROR: "Simplifying",
+  MISSING_CONSTANT: "Missing + C",
+  NOT_FINISHED: "Not finished",
   GENERAL_ERROR: "Invalid step",
 };
 

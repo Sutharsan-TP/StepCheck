@@ -9,6 +9,8 @@ import { STEP_STATUS, StatusBadge, toneClasses } from "./status";
 
 function StepDetails({ step, transition }: { step: StepOut; transition?: TransitionOut }) {
   const reason = transition?.reason_code;
+  // Indefinite integrals are compared through their derivatives (antiderivatives differ by a constant).
+  const integral = reason === "DIFFERS_BY_NON_CONSTANT";
   return (
     <div className="flex flex-col gap-2 text-sm text-muted-strong">
       {step.error && <p>{step.error.message}</p>}
@@ -25,6 +27,22 @@ function StepDetails({ step, transition }: { step: StepOut; transition?: Transit
           <MathText latex={valuesLatex(transition.extraneous_solutions)} />
         </p>
       )}
+      {transition?.found_value_latex && (
+        <p className="flex flex-wrap items-center gap-2">
+          <span className="text-muted">{integral ? "Differentiating this step gives:" : "This step works out to:"}</span>
+          <MathText latex={transition.found_value_latex} />
+        </p>
+      )}
+      {transition?.expected_value_latex && (
+        <p className="flex flex-wrap items-center gap-2">
+          <span className="text-muted">{integral ? "It should give back the integrand:" : "It should equal:"}</span>
+          <MathText latex={transition.expected_value_latex} />
+        </p>
+      )}
+      {transition?.counterexample && (
+        <p className="text-xs text-muted">For example, the two differ at {transition.counterexample}.</p>
+      )}
+      {transition?.note && <p className="text-xs text-muted">Note: {transition.note}.</p>}
       {step.solution_set && (
         <p className="flex flex-wrap items-center gap-2">
           <span className="text-muted">Solutions of this line:</span>

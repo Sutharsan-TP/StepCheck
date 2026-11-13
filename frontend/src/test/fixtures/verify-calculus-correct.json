@@ -1,0 +1,85 @@
+{
+  "request_id": null,
+  "topic": "LIMIT",
+  "overall_status": "CORRECT",
+  "first_error_step": null,
+  "complete_answer_step": 3,
+  "steps": [
+    {
+      "step": 1,
+      "input": "lim(x->0, sin(x)/x)",
+      "status": "VALID",
+      "latex": "\\lim_{x \\to 0} \\frac{\\sin\\left(x\\right)}{x}",
+      "normalized": "lim(x->0, sin(x)/x)",
+      "solution_set": null,
+      "solved_form": false,
+      "error": null
+    },
+    {
+      "step": 2,
+      "input": "lim(x->0, cos(x)/1)",
+      "status": "VALID",
+      "latex": "\\lim_{x \\to 0} \\frac{\\cos\\left(x\\right)}{1}",
+      "normalized": "lim(x->0, cos(x)/1)",
+      "solution_set": null,
+      "solved_form": false,
+      "error": null
+    },
+    {
+      "step": 3,
+      "input": "1",
+      "status": "VALID",
+      "latex": "1",
+      "normalized": "1",
+      "solution_set": null,
+      "solved_form": true,
+      "error": null
+    }
+  ],
+  "transitions": [
+    {
+      "from_step": 1,
+      "to_step": 2,
+      "status": "VALID",
+      "reason_code": null,
+      "compared_to_step": 1,
+      "locally_valid": true,
+      "matches_original": null,
+      "lost_solutions": [],
+      "extraneous_solutions": [],
+      "expected_value_latex": null,
+      "found_value_latex": null,
+      "counterexample": null,
+      "note": null
+    },
+    {
+      "from_step": 2,
+      "to_step": 3,
+      "status": "VALID",
+      "reason_code": null,
+      "compared_to_step": 2,
+      "locally_valid": true,
+      "matches_original": null,
+      "lost_solutions": [],
+      "extraneous_solutions": [],
+      "expected_value_latex": null,
+      "found_value_latex": null,
+      "counterexample": null,
+      "note": null
+    }
+  ],
+  "correct_solution": null,
+  "correct_solution_set": null,
+  "submitted_solution": null,
+  "submitted_solution_set": null,
+  "final_answer_status": "SOLVED",
+  "final_answer_correct": true,
+  "solution_complete": true,
+  "missing_solutions": null,
+  "extraneous_solutions": null,
+  "expected_answer": "1",
+  "expected_answer_latex": "1",
+  "missing_constant": null,
+  "notes": [],
+  "verification_id": "00000000-0000-4000-8000-00000000c41c"
+}

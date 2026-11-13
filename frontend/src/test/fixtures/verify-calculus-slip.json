@@ -1,0 +1,85 @@
+{
+  "request_id": null,
+  "topic": "DERIVATIVE",
+  "overall_status": "INCORRECT",
+  "first_error_step": 2,
+  "complete_answer_step": null,
+  "steps": [
+    {
+      "step": 1,
+      "input": "d/dx(x^2 sin(x))",
+      "status": "VALID",
+      "latex": "\\frac{d}{dx}\\left({x}^{2} \\sin\\left(x\\right)\\right)",
+      "normalized": "d/dx(x^2 sin(x))",
+      "solution_set": null,
+      "solved_form": false,
+      "error": null
+    },
+    {
+      "step": 2,
+      "input": "d/dx(x^2) d/dx(sin(x))",
+      "status": "FIRST_INVALID",
+      "latex": "\\frac{d}{dx}\\left({x}^{2}\\right) \\frac{d}{dx}\\left(\\sin\\left(x\\right)\\right)",
+      "normalized": "d/dx(x^2) d/dx(sin(x))",
+      "solution_set": null,
+      "solved_form": false,
+      "error": null
+    },
+    {
+      "step": 3,
+      "input": "2x cos(x)",
+      "status": "DOWNSTREAM_DEPENDENT",
+      "latex": "2 x \\cos\\left(x\\right)",
+      "normalized": "2 x cos(x)",
+      "solution_set": null,
+      "solved_form": true,
+      "error": null
+    }
+  ],
+  "transitions": [
+    {
+      "from_step": 1,
+      "to_step": 2,
+      "status": "FIRST_INVALID",
+      "reason_code": "NOT_EQUAL",
+      "compared_to_step": 1,
+      "locally_valid": false,
+      "matches_original": null,
+      "lost_solutions": [],
+      "extraneous_solutions": [],
+      "expected_value_latex": "x^{2} \\cos{\\left(x \\right)} + 2 x \\sin{\\left(x \\right)}",
+      "found_value_latex": "2 x \\cos{\\left(x \\right)}",
+      "counterexample": "x = 37/100",
+      "note": null
+    },
+    {
+      "from_step": 2,
+      "to_step": 3,
+      "status": "DOWNSTREAM_DEPENDENT",
+      "reason_code": null,
+      "compared_to_step": null,
+      "locally_valid": null,
+      "matches_original": null,
+      "lost_solutions": [],
+      "extraneous_solutions": [],
+      "expected_value_latex": null,
+      "found_value_latex": null,
+      "counterexample": null,
+      "note": null
+    }
+  ],
+  "correct_solution": null,
+  "correct_solution_set": null,
+  "submitted_solution": null,
+  "submitted_solution_set": null,
+  "final_answer_status": "SOLVED",
+  "final_answer_correct": false,
+  "solution_complete": true,
+  "missing_solutions": null,
+  "extraneous_solutions": null,
+  "expected_answer": "x*(x*cos(x) + 2*sin(x))",
+  "expected_answer_latex": "x \\left(x \\cos{\\left(x \\right)} + 2 \\sin{\\left(x \\right)}\\right)",
+  "missing_constant": null,
+  "notes": [],
+  "verification_id": "00000000-0000-4000-8000-00000000c41c"
+}
