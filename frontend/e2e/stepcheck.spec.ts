@@ -8,7 +8,7 @@ const SHOTS = resolve(__dirname, ".artifacts/screens");
 async function enterSteps(page: Page, steps: string[]) {
   await page.goto("/workspace");
   for (let i = 0; i < steps.length; i++) {
-    if (i >= 2) await page.getByRole("button", { name: "Add step" }).click();
+    if (i >= 2) await page.getByRole("button", { name: `Add step below step ${i}` }).click();
     await page.getByLabel(i === 0 ? "Problem" : `Step ${i + 1}`, { exact: true }).fill(steps[i]);
   }
   await page.getByRole("button", { name: "Check my steps" }).click();

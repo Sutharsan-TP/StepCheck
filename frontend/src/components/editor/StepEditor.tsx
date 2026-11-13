@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowDown, ArrowUp, Calculator, Plus, Sparkles, Trash2 } from "lucide-react";
-import { useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useLayoutEffect, useRef, useState } from "react";
 
 import { MathText } from "@/components/math/MathText";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,30 @@ export function stepProblems(rows: Row[]): string | null {
   if (filled.length < MIN_STEPS) return `Enter at least ${MIN_STEPS} steps: the problem and at least one step of working.`;
   if (rows.some((r) => r.text.length > MAX_STEP_LENGTH)) return `Each step can be at most ${MAX_STEP_LENGTH} characters.`;
   return null;
+}
+
+/** A slim strip between steps (like adding a cell in a notebook): always visible, a full-width target. */
+function InsertButton({ label, onClick, disabled }: { label: string; onClick: () => void; disabled: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      title={disabled ? `At most ${MAX_STEPS} steps` : label}
+      className={cn(
+        "group flex h-7 w-full items-center gap-2 text-muted transition-colors",
+        "hover:text-primary focus-visible:text-primary focus-visible:outline-2 focus-visible:outline-primary",
+        "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-muted",
+      )}
+    >
+      <span className="h-px flex-1 bg-border group-hover:bg-primary/50 group-focus-visible:bg-primary/50" aria-hidden />
+      <span className="flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-xs group-hover:border-primary/50">
+        <Plus className="size-3" aria-hidden /> Add step
+      </span>
+      <span className="h-px flex-1 bg-border group-hover:bg-primary/50 group-focus-visible:bg-primary/50" aria-hidden />
+    </button>
+  );
 }
 
 const stepLabel = (index: number) => (index === 0 ? "Problem" : `Step ${index + 1}`);
@@ -91,7 +115,15 @@ export function StepEditor({
 
   const update = (id: string, text: string) => setRows((rs) => rs.map((r) => (r.id === id ? { ...r, text } : r)));
   const remove = (id: string) => setRows((rs) => (rs.length > 1 ? rs.filter((r) => r.id !== id) : rs));
-  const add = () => setRows((rs) => (rs.length < MAX_STEPS ? [...rs, ...makeRows([""])] : rs));
+  // Insert an empty step so that it ends up at `index` (0 = above the first step), and move to it.
+  const insertAt = (index: number) => {
+    if (rows.length >= MAX_STEPS) return;
+    const fresh = makeRows([""]);
+    setRows((rs) => [...rs.slice(0, index), ...fresh, ...rs.slice(index)]);
+    setActiveId(fresh[0].id);
+    pendingCaret.current = { id: fresh[0].id, caret: 0 };
+  };
+  const add = () => insertAt(rows.length);
   const move = (index: number, delta: -1 | 1) =>
     setRows((rs) => {
       const target = index + delta;
@@ -168,11 +200,15 @@ export function StepEditor({
         </div>
       </div>
 
-      <ol className="flex flex-col gap-2" aria-label="Solution steps">
+      <ol className="flex flex-col" aria-label="Solution steps">
+        <li className="list-none">
+          <InsertButton label="Add step above step 1" onClick={() => insertAt(0)} disabled={rows.length >= MAX_STEPS} />
+        </li>
         {rows.map((row, index) => {
           const tooLong = row.text.length > MAX_STEP_LENGTH;
           return (
-            <li key={row.id} className="rounded-lg border border-border bg-card p-3">
+            <Fragment key={row.id}>
+            <li className="rounded-lg border border-border bg-card p-3">
               <div className="flex items-start gap-3">
                 <span className="mt-2 w-14 shrink-0 text-xs font-medium text-muted">{stepLabel(index)}</span>
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -252,6 +288,14 @@ export function StepEditor({
                 </div>
               </div>
             </li>
+            <li className="list-none">
+              <InsertButton
+                label={`Add step below step ${index + 1}`}
+                onClick={() => insertAt(index + 1)}
+                disabled={rows.length >= MAX_STEPS}
+              />
+            </li>
+            </Fragment>
           );
         })}
       </ol>
@@ -271,10 +315,7 @@ export function StepEditor({
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button variant="secondary" onClick={add} disabled={rows.length >= MAX_STEPS}>
-          <Plus className="size-4" aria-hidden /> Add step
-        </Button>
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <Button size="lg" onClick={submit} disabled={submitting}>
           {submitting ? "Checking…" : submitLabel}
         </Button>

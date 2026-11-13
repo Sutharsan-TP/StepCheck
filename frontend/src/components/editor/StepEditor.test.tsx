@@ -12,7 +12,7 @@ describe("StepEditor", () => {
 
     await user.type(screen.getByLabelText("Problem"), "2x + 5 = 15");
     await user.type(screen.getByLabelText("Step 2"), "  2x = 10 ");
-    await user.click(screen.getByRole("button", { name: /add step/i }));
+    await user.click(screen.getByRole("button", { name: "Add step below step 2" }));
     await user.type(screen.getByLabelText("Step 3"), "x = 5");
     await user.click(screen.getByRole("button", { name: /check my steps/i }));
 
@@ -82,5 +82,34 @@ describe("StepEditor", () => {
     await user.click(screen.getByRole("button", { name: "Lost quadratic solution" }));
     expect(screen.getByLabelText("Problem")).toHaveValue("x^2 - 5x + 6 = 0");
     expect(screen.getByLabelText("Step 4")).toHaveValue("x = 2");
+  });
+});
+
+describe("StepEditor: inserting steps like notebook cells", () => {
+  const order = () => screen.getAllByRole("textbox").map((el) => (el as HTMLInputElement).value);
+
+  it("offers an insert strip above the first step, between steps and below the last", () => {
+    render(<StepEditor initialSteps={["a", "b", "c"]} onSubmit={vi.fn()} showExamples={false} />);
+    expect(screen.getAllByRole("button", { name: /^Add step/ }).map((b) => b.getAttribute("aria-label"))).toEqual([
+      "Add step above step 1",
+      "Add step below step 1",
+      "Add step below step 2",
+      "Add step below step 3",
+    ]);
+  });
+
+  it("inserts in the middle, above the first and below the last, and focuses the new step", async () => {
+    const user = userEvent.setup();
+    render(<StepEditor initialSteps={["a", "b"]} onSubmit={vi.fn()} showExamples={false} />);
+
+    await user.click(screen.getByRole("button", { name: "Add step below step 1" }));
+    expect(order()).toEqual(["a", "", "b"]);
+    expect(screen.getByLabelText("Step 2")).toHaveFocus();
+
+    await user.click(screen.getByRole("button", { name: "Add step above step 1" }));
+    expect(order()).toEqual(["", "a", "", "b"]);
+
+    await user.click(screen.getByRole("button", { name: "Add step below step 4" }));
+    expect(order()).toEqual(["", "a", "", "b", ""]);
   });
 });
