@@ -13,10 +13,18 @@ from __future__ import annotations
 import json
 import re
 
+from starlette.concurrency import run_in_threadpool
+
 from app.api.schemas.explanation import LLM_JSON_SCHEMA, ExplainResponse, LLMExplanation
+from app.core.calculus.calc_diagnosis import CalcDiagnosis, CalcErrorCategory, describe
+from app.core.calculus.calc_parser import to_text
+from app.core.calculus.calc_verifier import verify_calculus
+from app.core.calculus.sandbox import SandboxFailure, SandboxTimeout, get_sandbox
+from app.core.checking import is_calculus
 from app.core.correction_engine import CorrectionAction, FullCorrection, correct_full
 from app.core.first_error_detector import verify_steps
-from app.core.types import OverallStatus, VerificationResult
+from app.core.types import OverallStatus, StepStatus, VerificationResult
+from app.utils.errors import MathInputError
 from app.services.openrouter_client import OpenRouterClient
 from app.utils.errors import APIError
 
@@ -132,6 +140,8 @@ def _response(result, full, prose: LLMExplanation, source: str, ai_status: str |
 
 
 async def explain(steps: list[str], client: OpenRouterClient) -> ExplainResponse:
+    if is_calculus(steps):
+        return await _explain_calculus(steps, client)
     result = verify_steps(steps)
     full = correct_full(steps)
 
@@ -163,3 +173,116 @@ async def explain(steps: list[str], client: OpenRouterClient) -> ExplainResponse
     if not consistent_with_facts(prose, facts):
         return _response(result, full, template, "TEMPLATE", "REJECTED_BY_GUARD")
     return _response(result, full, prose, "LLM", None)
+
+
+# ------------------------------------------------------------------------ calculus
+
+
+_UNDECIDED_REASONS = {
+    "TIMEOUT": "Step {n} took too long to check, so StepCheck cannot say whether it is right.",
+    "UNDEFINED": "In step {n} a limit or value is undefined (for example a two-sided limit that does not exist), "
+    "so StepCheck cannot confirm it.",
+    "CANNOT_DECIDE": "StepCheck could not decide whether step {n} is equal to the step before it.",
+}
+
+
+def _calculus_engine_message(result: VerificationResult) -> str:
+    if result.overall_status is OverallStatus.CORRECT:
+        return "Every step is valid and the final answer is complete."
+    for s in result.steps:
+        if s.analysis.error:
+            return f"Step {s.step} could not be checked: {s.analysis.error.message}"
+    for t in result.transitions:
+        if t.status is StepStatus.NEEDS_REVIEW:
+            reason = _UNDECIDED_REASONS.get(t.reason_code or "", "Step {n} needs to be reviewed by a teacher.")
+            return reason.format(n=t.to_step)
+    return "StepCheck could not check this work."
+
+
+def _calculus_diagnosis(steps: list[str], result: VerificationResult) -> CalcDiagnosis:
+    """The engine's own account of the mistake (or of what is missing)."""
+    if result.first_error_step is None:
+        if result.missing_constant:
+            return describe(CalcErrorCategory.MISSING_CONSTANT, len(steps))
+        return describe(CalcErrorCategory.NOT_FINISHED, len(steps))
+
+    n = result.first_error_step
+    wrong = result.steps[n - 1].analysis.statement
+    if n == 1:
+        anchor_text = to_text(wrong.links[0])
+    else:
+        transition = result.transitions[n - 2]
+        anchor = result.steps[(transition.compared_to_step or n - 1) - 1].analysis.statement
+        anchor_text = to_text(anchor.links[-1])
+    try:
+        return get_sandbox().run("diagnose", anchor_text, to_text(wrong.links[-1]), result.topic, n)
+    except (SandboxTimeout, SandboxFailure, MathInputError):
+        return describe(CalcErrorCategory.GENERAL_ERROR, n)
+
+
+def _calculus_facts(steps: list[str], result: VerificationResult, d: CalcDiagnosis) -> dict:
+    first = next((t for t in result.transitions if t.status is StepStatus.FIRST_INVALID), None)
+    return {
+        "topic": result.topic,
+        "student_steps": [{"step": i + 1, "text": s} for i, s in enumerate(steps)],
+        "step_statuses": [s.status.value for s in result.steps],
+        "overall_status": result.overall_status.value,
+        "first_error_step": result.first_error_step,
+        "error_category": d.category,
+        "rule": d.expected_rule,
+        "engine_explanation": d.explanation,
+        "evidence": d.evidence or None,
+        "point_where_values_differ": first.counterexample if first else None,
+        "missing_constant_c": result.missing_constant,
+        "correct_final_answer": result.expected_answer,
+    }
+
+
+def _calculus_response(result: VerificationResult, d: CalcDiagnosis | None, prose: LLMExplanation, source: str, ai_status: str | None) -> ExplainResponse:
+    return ExplainResponse(
+        source=source,
+        ai_status=ai_status,
+        overall_status=result.overall_status.value,
+        first_error_step=result.first_error_step,
+        error_category=d.category if d else None,
+        expected_rule=d.expected_rule if d else None,
+        corrected_step=None,
+        suggested_next_step=None,
+        correction_action=None,
+        explanation=prose.explanation,
+        why_invalid=prose.why_invalid or None,
+        how_to_avoid=prose.how_to_avoid or None,
+        learning_tip=prose.learning_tip or None,
+    )
+
+
+async def _explain_calculus(steps: list[str], client: OpenRouterClient) -> ExplainResponse:
+    # The verifier waits on the sandbox; keep that off the event loop.
+    result = await run_in_threadpool(verify_calculus, steps)
+    if result.overall_status not in (OverallStatus.INCORRECT, OverallStatus.INCOMPLETE):
+        return _calculus_response(result, None, LLMExplanation(explanation=_calculus_engine_message(result)), "ENGINE", None)
+
+    d = await run_in_threadpool(_calculus_diagnosis, steps, result)
+    template = LLMExplanation(
+        explanation=f"{d.explanation} {d.evidence}".strip(),
+        why_invalid=f"Rule: {d.expected_rule}.",
+        how_to_avoid=d.hints[1],
+        learning_tip=d.hints[0],
+    )
+    facts = _calculus_facts(steps, result, d)
+    try:
+        prose = await client.chat_json(
+            [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": "FACTS:\n" + json.dumps(facts, ensure_ascii=False, indent=1)},
+            ],
+            role="text",
+            schema_name="step_explanation",
+            json_schema=LLM_JSON_SCHEMA,
+            validate=LLMExplanation.model_validate,
+        )
+    except APIError as exc:
+        return _calculus_response(result, d, template, "TEMPLATE", exc.code)
+    if not consistent_with_facts(prose, facts):
+        return _calculus_response(result, d, template, "TEMPLATE", "REJECTED_BY_GUARD")
+    return _calculus_response(result, d, prose, "LLM", None)
