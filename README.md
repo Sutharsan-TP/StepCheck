@@ -10,7 +10,7 @@ StepCheck checks each line of a student's algebra working. It finds the first st
 | Correction engine (FULL and GUIDED modes) | Done |
 | AI: handwriting transcription and explanations through OpenRouter | Done, tested with mocks. Needs a key to run against real models. |
 | Frontend: landing page, workspace, transcription review, results, corrections | Done |
-| Deployment (Render and Vercel) | Not started yet |
+| Deployment (Render and Vercel) | Configured: [`render.yaml`](render.yaml) and [docs/deployment.md](docs/deployment.md) |
 
 ## What it supports
 
@@ -70,12 +70,12 @@ Then upload any image from `examples/handwritten_samples/` on the **Upload photo
 
 | Variable | Purpose |
 |---|---|
-| `CORS_ORIGINS` | Comma-separated frontend origins (default `http://localhost:3000`). |
+| `CORS_ORIGINS`, `CORS_ORIGIN_REGEX` | Comma-separated frontend origins (default `http://localhost:3000`), plus an optional pattern for extra origins such as Vercel preview URLs. |
 | `OPENROUTER_API_KEY` | Needed for real transcription and AI explanations. Kept on the backend only. |
 | `OPENROUTER_VISION_MODEL`, `OPENROUTER_TEXT_MODEL`, `OPENROUTER_FALLBACK_MODEL` | Model names. None are hardcoded. Use models you've tested for JSON output, and for images in the vision model. |
 | `OPENROUTER_TIMEOUT_SECONDS`, `OPENROUTER_MAX_RETRIES` | AI call timeout and number of retries. |
 | `PROGRESS_TOKEN_SECRET` | Signs guided-correction progress. Set a long random value. If it's unset, a new secret is generated at startup and progress tokens stop working after a restart. |
-| `RATE_LIMIT_*_PER_MINUTE`, `TRUST_PROXY` | Per-client rate limits, and whether to trust `X-Forwarded-For`. |
+| `RATE_LIMIT_*_PER_MINUTE`, `TRUST_PROXY`, `TRUSTED_PROXY_HOPS` | Per-client rate limits; whether to trust `X-Forwarded-For`, and how many proxies sit in front of the app (Render: 2). |
 | `STEPCHECK_STUB_AI` | `true` only for local demos and tests. |
 
 **What needs an OpenRouter key:**
@@ -106,3 +106,4 @@ None of the automated tests call a real AI service.
 - [docs/architecture.md](docs/architecture.md): components, how a step is judged, trust boundaries, safety measures.
 - [docs/api-contract.md](docs/api-contract.md): endpoints, error codes, the guided-correction protocol, storage.
 - [docs/demo.md](docs/demo.md): a demo script under three minutes.
+- [docs/deployment.md](docs/deployment.md): deploying to Render and Vercel, and checking the live site.

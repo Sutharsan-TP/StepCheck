@@ -1,0 +1,40 @@
+# Render Blueprint for the StepCheck API (New > Blueprint, point it at this repo).
+# Values marked `sync: false` are entered in the Render dashboard on first deploy.
+services:
+  - type: web
+    name: stepcheck-api
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    # One process only: verifications, rate limits and guided progress live in memory.
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.6
+      # Exact frontend origin(s), comma-separated, e.g. https://stepcheck.vercel.app
+      - key: CORS_ORIGINS
+        sync: false
+      # Optional: also allow Vercel preview URLs, e.g. https://stepcheck-[a-z0-9-]+\.vercel\.app
+      - key: CORS_ORIGIN_REGEX
+        sync: false
+      - key: PROGRESS_TOKEN_SECRET
+        generateValue: true
+      # Requests reach the app through Cloudflare and then Render's proxy, each appending
+      # one X-Forwarded-For entry, so the client is the 2nd entry from the right.
+      - key: TRUST_PROXY
+        value: "true"
+      - key: TRUSTED_PROXY_HOPS
+        value: "2"
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_VISION_MODEL
+        sync: false
+      - key: OPENROUTER_TEXT_MODEL
+        sync: false
+      - key: OPENROUTER_FALLBACK_MODEL
+        sync: false
+      - key: OPENROUTER_APP_URL
+        sync: false

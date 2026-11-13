@@ -60,7 +60,7 @@ If a step is unsupported or unreadable, StepCheck reports `UNSUPPORTED` or `NEED
 - **Uploads.** Files are limited to 5 MB and handled entirely in memory. The format is detected from the file's bytes, and only JPEG, PNG and WebP are accepted. Image dimensions are limited and decompression bombs are rejected. Images are re-encoded to strip EXIF data. Nothing is written to disk or logged.
 - **AI calls.** The OpenRouter client uses structured JSON output and retries with backoff on 429, 5xx and timeouts. It switches to a fallback model if the main model is unavailable, and retries once if the output is malformed. Every failure becomes a structured error (429, 502 or 503). The API key is never logged or returned to the browser.
 - **If the AI is down.** Explanations fall back to deterministic templates. Transcription returns `AI_UNAVAILABLE`.
-- **Rate limits.** Each endpoint has a per-client token bucket, with a `Retry-After` header on 429. `X-Forwarded-For` is only trusted when `TRUST_PROXY=true`.
+- **Rate limits.** Each endpoint has a per-client token bucket, with a `Retry-After` header on 429. `X-Forwarded-For` is only trusted when `TRUST_PROXY=true`, and then only the entry added by the outermost trusted proxy (`TRUSTED_PROXY_HOPS` from the right); entries the client sent itself are ignored.
 - **Storage.** Verification results are kept in memory for 1 hour, up to 1,000 entries. Expired entries are evicted first, then the oldest. A server restart clears them, so `/correct` and `/explain` also accept the steps directly.
 - **Internal errors.** Unexpected exceptions are logged on the server and returned as `INTERNAL_ERROR` without a stack trace.
 

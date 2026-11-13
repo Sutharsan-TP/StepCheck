@@ -28,7 +28,7 @@ Every error response has the same shape:
 
 ### Rate limits
 
-Each client IP has a per-endpoint token bucket. Defaults per minute: `/transcribe` 10, `/explain` 30, `/verify` 120, `/correct` 120. All four can be set through `RATE_LIMIT_*_PER_MINUTE`. Limits are kept in memory per server process. `X-Forwarded-For` is only used when `TRUST_PROXY=true`.
+Each client IP has a per-endpoint token bucket. Defaults per minute: `/transcribe` 10, `/explain` 30, `/verify` 120, `/correct` 120. All four can be set through `RATE_LIMIT_*_PER_MINUTE`. Limits are kept in memory per server process. `X-Forwarded-For` is only used when `TRUST_PROXY=true`, reading the entry `TRUSTED_PROXY_HOPS` places from the right.
 
 Requests that contain unknown fields are rejected. This means a client can't send its own correctness claims, such as `"status": "VALID"`.
 
