@@ -26,6 +26,7 @@ _SAMPLES = {
     "demo1_correct_linear": ["2x + 5 = 15", "2x = 10", "x = 5"],
     "demo2_first_error": ["2x + 5 = 15", "2x = 15 - 5", "2x = 20", "x = 10"],
     "demo3_lost_root": ["x^2 - 5x + 6 = 0", "(x - 2)(x - 3) = 0", "x - 2 = 0", "x = 2"],
+    "demo4_calculus": ["d/dx(x^2 sin(x))", "d/dx(x^2) d/dx(sin(x))", "2x cos(x)"],
 }
 _MAX_HASH_DISTANCE = 40  # of 512 bits; the samples are 140+ bits apart
 _UNKNOWN = ["?"]

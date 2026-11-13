@@ -24,7 +24,7 @@ def use_stub():
 
 def test_samples_are_distinguishable():
     hashes = stub_ai._sample_hashes()
-    assert len(hashes) == 3
+    assert len(hashes) == len(stub_ai._SAMPLES) == 4
     values = list(hashes.values())
     distances = [bin(a ^ b).count("1") for i, a in enumerate(values) for b in values[i + 1 :]]
     assert min(distances) > 3 * stub_ai._MAX_HASH_DISTANCE
@@ -49,3 +49,10 @@ def test_unknown_image_is_flagged_not_guessed():
 def test_stub_explanations_restate_engine_facts():
     body = client.post("/api/v1/explain", json={"steps": ["2x + 5 = 15", "2x = 15 - 5", "2x = 20", "x = 10"]}).json()
     assert body["source"] == "LLM" and "15 - 5" in body["explanation"]
+
+
+def test_stub_explains_calculus_from_engine_facts():
+    body = client.post("/api/v1/explain", json={"steps": ["d/dx(x^2 sin(x))", "d/dx(x^2) d/dx(sin(x))", "2x cos(x)"]}).json()
+    assert body["source"] == "LLM"  # the stub answers through the real client and guard
+    assert body["error_category"] == "PRODUCT_RULE_ERROR"
+    assert "product" in body["explanation"].lower()

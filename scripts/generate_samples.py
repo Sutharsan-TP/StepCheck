@@ -1,4 +1,4 @@
-"""Generate synthetic "handwritten" sample images for the three demo solutions.
+"""Generate synthetic "handwritten" sample images for the demo solutions (algebra and calculus).
 
 Usage (from the repo root):
     backend\\.venv\\Scripts\\python scripts\\generate_samples.py
@@ -21,6 +21,7 @@ DEMOS = {
     "demo1_correct_linear": ["2x + 5 = 15", "2x = 10", "x = 5"],
     "demo2_first_error": ["2x + 5 = 15", "2x = 15 - 5", "2x = 20", "x = 10"],
     "demo3_lost_root": ["x² - 5x + 6 = 0", "(x - 2)(x - 3) = 0", "x - 2 = 0", "x = 2"],
+    "demo4_calculus": ["d/dx(x^2 sin(x))", "d/dx(x^2) d/dx(sin(x))", "2x cos(x)"],
 }
 
 _FONT_CANDIDATES = [
