@@ -141,3 +141,9 @@ def test_cors_origin_regex_allows_matching_preview_origins(monkeypatch):
     assert allowed("https://stepcheck-git-main-team.vercel.app") == "https://stepcheck-git-main-team.vercel.app"
     assert allowed("http://localhost:3000") == "http://localhost:3000"
     assert allowed("https://stepcheck-x.vercel.app.evil.example") is None
+
+
+def test_root_points_to_health_and_docs():
+    r = client.get("/")
+    assert r.status_code == 200
+    assert r.json() == {"service": "stepcheck-api", "health": "/api/v1/health", "docs": "/docs"}

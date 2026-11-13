@@ -62,6 +62,10 @@ def create_app() -> FastAPI:
         logger.exception("Unhandled error")  # logged server-side only
         return _error(500, "INTERNAL_ERROR", "An unexpected error occurred.")
 
+    @app.get("/", include_in_schema=False)
+    def root() -> dict:
+        return {"service": settings.service_name, "health": f"{API_PREFIX}/health", "docs": "/docs"}
+
     @app.get(f"{API_PREFIX}/health")
     def health() -> dict:
         return {"status": "healthy", "service": settings.service_name}
