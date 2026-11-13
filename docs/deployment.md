@@ -45,7 +45,13 @@ Saving restarts the service.
 
 ## 4. Adding AI later
 
-**Free option (Google Gemini):** the client works with any OpenAI-compatible endpoint, so it can call Gemini's free tier directly. Create a key at https://aistudio.google.com/apikey, then set `OPENROUTER_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai`, `OPENROUTER_API_KEY` to the Gemini key, and the `OPENROUTER_*_MODEL` values to Gemini model IDs such as `gemini-2.5-flash`, without a `models/` prefix. The variable names still say OPENROUTER. Google may use free-tier prompts, including uploaded images, to improve its products.
+**Free option (Google Gemini):** the client works with any OpenAI-compatible endpoint, so it can call Gemini's free tier directly. Create a key at https://aistudio.google.com/apikey **in a new project**. A key in an existing Cloud project may have a free quota of 0, and Google then answers every request with 429. Set `OPENROUTER_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai` and `OPENROUTER_API_KEY` to the Gemini key. Set the model IDs, without a `models/` prefix:
+
+- vision: `gemini-3.5-flash`
+- text: `gemini-3.5-flash-lite`
+- fallback: `gemini-3.1-flash-lite`
+
+These passed the smoke test in November 2026. Gemini 2.5 models are closed to new users. The variable names still say OPENROUTER. Google may use free-tier prompts, including uploaded images, to improve its products.
 
 Otherwise, set `OPENROUTER_API_KEY` and the three `OPENROUTER_*_MODEL` values in Render. Set `OPENROUTER_APP_URL` to the Vercel URL. Before relying on the models, test them locally with `backend/scripts/smoke_openrouter.py`.
 
