@@ -5,8 +5,9 @@ import { defineConfig, devices } from "@playwright/test";
 
 // End-to-end tests run the real backend with the deterministic offline AI stub
 // (STEPCHECK_STUB_AI=true), so no API key or network access is needed.
-const BACKEND_PORT = 8765;
-const FRONTEND_PORT = 3100;
+// Override with E2E_BACKEND_PORT / E2E_FRONTEND_PORT if these are taken.
+const BACKEND_PORT = Number(process.env.E2E_BACKEND_PORT ?? 8765);
+const FRONTEND_PORT = Number(process.env.E2E_FRONTEND_PORT ?? 3100);
 const backendDir = resolve(__dirname, "../backend");
 const python = [join(backendDir, ".venv/Scripts/python.exe"), join(backendDir, ".venv/bin/python")].find(existsSync) ?? "python";
 

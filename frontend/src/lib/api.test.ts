@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import verifyDemo2 from "@/test/fixtures/verify-demo2.json";
 import { mockFetch } from "@/test/fetch";
 
-import { ApiError, correct, describeError, explain, verify } from "./api";
+import { ApiError, correct, describeError, explain, verify, wakeBackend } from "./api";
 
 const STEPS = ["2x + 5 = 15", "2x = 15 - 5", "2x = 20", "x = 10"];
 
@@ -54,5 +54,13 @@ describe("api client", () => {
     const calls = mockFetch({ status: 503, body: { error: { code: "AI_UNAVAILABLE", message: "x" } } });
     await expect(explain({ verificationId: "abc", steps: STEPS })).rejects.toMatchObject({ code: "AI_UNAVAILABLE" });
     expect(calls).toHaveLength(1);
+  });
+
+  it("pings /health to wake the backend and ignores failures", async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new TypeError("offline"));
+    vi.stubGlobal("fetch", fetchMock);
+    expect(() => wakeBackend()).not.toThrow();
+    await Promise.resolve();
+    expect(fetchMock.mock.calls[0][0]).toMatch(/\/api\/v1\/health$/);
   });
 });

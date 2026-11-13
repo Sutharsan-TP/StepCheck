@@ -24,6 +24,12 @@ export class ApiError extends Error {
 }
 
 const NETWORK_MESSAGE = "StepCheck's server could not be reached. Check your connection and try again.";
+const TIMEOUT_MESSAGE = "The request took too long. If the server was idle it may still be starting up, so try again in a moment.";
+
+/** Ping the backend so a host that sleeps when idle (e.g. Render's free tier) starts waking before the first real request. */
+export function wakeBackend(): void {
+  fetch(`${API_URL}/api/v1/health`, { signal: AbortSignal.timeout(90_000) }).catch(() => {});
+}
 
 async function request<T>(path: string, init: RequestInit, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<T> {
   const controller = new AbortController();
@@ -33,7 +39,7 @@ async function request<T>(path: string, init: RequestInit, timeoutMs = DEFAULT_T
     response = await fetch(`${API_URL}/api/v1${path}`, { ...init, signal: controller.signal });
   } catch (error) {
     const timedOut = error instanceof DOMException && error.name === "AbortError";
-    throw new ApiError(0, timedOut ? "TIMEOUT" : "NETWORK_ERROR", timedOut ? "The request took too long." : NETWORK_MESSAGE);
+    throw new ApiError(0, timedOut ? "TIMEOUT" : "NETWORK_ERROR", timedOut ? TIMEOUT_MESSAGE : NETWORK_MESSAGE);
   } finally {
     clearTimeout(timer);
   }
