@@ -17,6 +17,7 @@ Every error response has the same shape:
 | 422 | `INVALID_REQUEST` | The request didn't validate: a malformed UUID, an unknown field, a limit exceeded, or `progress` sent without a token. |
 | 422 | `PROGRESS_TOKEN_INVALID` | `progress_token` doesn't match these steps and this progress. |
 | 422 | `INVALID_PROGRESS` | `progress` failed re-verification on the server. |
+| 422 | `CORRECTION_NOT_AVAILABLE` | `/correct` was called for a calculus problem. Corrections are algebra-only for now. |
 | 400 | `INVALID_IMAGE`, `IMAGE_DIMENSIONS_UNSUPPORTED` | The upload is empty, corrupt, or smaller than 64 px or larger than 8000 px on a side. |
 | 413 | `IMAGE_TOO_LARGE` | The upload is larger than 5 MB, or decodes to too many pixels. |
 | 415 | `UNSUPPORTED_IMAGE_TYPE` | The file's contents aren't JPEG, PNG or WebP. The filename and declared type are ignored. |
@@ -65,7 +66,35 @@ The response includes:
 | `complete_answer_step` | The earliest step that states the complete answer, counted only if every step up to and including it is valid. |
 | `steps[]` | Each step's status, its LaTeX, its normalized form and its solution set. |
 | `transitions[]` | Each step-to-step check, with lost and extra solutions. |
-| `correct_solution`, `submitted_solution`, `solution_complete`, `missing_solutions`, `extraneous_solutions` | Whether the final answer is correct and complete. |
+| `correct_solution`, `submitted_solution`, `solution_complete`, `missing_solutions`, `extraneous_solutions` | Whether the final answer is correct and complete (equations). |
+| `topic` | `ALGEBRA`, or a calculus topic: `DERIVATIVE`, `INTEGRAL`, `DEFINITE_INTEGRAL` or `LIMIT`. See [Calculus](#calculus). |
+| `expected_answer`, `expected_answer_latex`, `missing_constant`, `notes` | Calculus only: the engine's own final answer, whether an indefinite integral lacks `+ C`, and remarks such as "equal for x > 0". |
+
+### Calculus
+
+The first line decides how the whole solution is read: if it uses `d/dx`, `int`, `∫` or `lim`, every step is checked by the calculus engine, otherwise by the equation engine.
+
+| You write | Syntax | Also accepted |
+|---|---|---|
+| Derivative | `d/dx(x^2 sin(x))` | |
+| Indefinite integral | `int(x^2) dx` | `∫ x^2 dx` |
+| Definite integral | `int[0, 2](x^2) dx` | `∫[0, 2](x^2) dx` |
+| Limit | `lim(x->0, sin(x)/x)` | `x→0` |
+| Antiderivative evaluated between limits | `[x^3/3][0, 2]` | |
+| Functions | `sin cos tan sec csc cot arcsin arccos arctan ln log exp abs sqrt`, always with brackets, and `sin^2(x)` | |
+| Constants | `pi`, `e`, `oo` (infinity), `C` (the constant of integration) | `π`, `∞` |
+
+A step may chain several expressions with `=`, for example `d/dx(sin(x^2)) = cos(x^2) d/dx(x^2)`.
+
+How steps are judged:
+- **Derivatives, definite integrals, limits.** A step must have the same value as the step before it, as a function of `x` or as a number. `FIRST_INVALID` is only reported when the engine finds a point where the values provably differ; that point is returned as `counterexample`.
+- **Indefinite integrals.** A step must differ from the one before it by a constant only. StepCheck checks this by differentiating both, so no integration is needed to judge a step. A missing `+ C` in the final answer makes the result `INCOMPLETE`, with `missing_constant: true`.
+- **Undecided steps.** If the engine can neither prove nor disprove equality, or a computation times out, the step is `NEEDS_REVIEW`. It is never guessed. Reason codes on `transitions[]`: `NOT_EQUAL`, `DIFFERS_BY_NON_CONSTANT`, `CANNOT_DECIDE`, `UNDEFINED` and `TIMEOUT`.
+- **Evidence.** `transitions[]` also carry `expected_value_latex` and `found_value_latex`. For integrals these are the derivatives of the two sides.
+- **Completeness.** The final line must contain no `d/dx`, `∫`, `lim` or `[F][a, b]`.
+- **Limits of the service.** One variable `x`, the functions above, at most 4 calculus operators and 200 characters per step. Anything else comes back as `UNSUPPORTED` or `NEEDS_REVIEW`.
+
+`/correct` is not available for calculus yet and returns `422 CORRECTION_NOT_AVAILABLE`. `/explain` works.
 
 ### Verification storage
 
@@ -207,6 +236,8 @@ Response:
 - `ENGINE`: no AI was called at all. This happens for correct, unsupported or unverifiable work, and whenever no verified correction exists.
 
 AI-written prose is rejected when it calls the work correct although the engine found a mistake, or when it contains a number that isn't in the verified facts.
+
+For calculus, `error_category` names the rule that was misapplied, for example `PRODUCT_RULE_ERROR`, `CHAIN_RULE_ERROR`, `INTEGRAL_POWER_RULE_ERROR`, `LIMITS_SWAPPED` or `MISSING_CONSTANT`. `corrected_step`, `suggested_next_step` and `correction_action` are `null`. The engine finds the category by re-evaluating the last trusted step with one common wrong rule at a time and checking whether it reproduces the student's step; if none does, the category is `GENERAL_ERROR`.
 
 ## Offline AI stub (local demos and tests only)
 

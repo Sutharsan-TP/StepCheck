@@ -21,7 +21,18 @@ If you have tested an OpenRouter key and models, set them instead of the stub to
 | 2:20 | **Handwritten upload** | **Upload photo** → the sample. The review screen shows one highlighted line, and **Confirm** stays disabled until that line is ticked. Confirm to see the results. | "AI reads the handwriting, but the student confirms every line. Nothing is checked until they do." |
 | 2:45 | **Close** | | "Exact symbolic checking, the first error located, and corrections that are themselves verified — with AI used only where it is safe." |
 
+## Calculus segment (add 60 seconds)
+
+| Step | What to show | What to say |
+|---|---|---|
+| **Keypad** | Workspace → *Calculus* examples → *Product rule slip*. Show the keypad's Calculus page. | "Students can type, or tap a calculator-style keypad." |
+| **Check** | Step 2 is red: *This step works out to 2x cos(x), but it should equal …*. Open **Explain mistake**: *Product rule*. | "It finds the exact step and names the rule that was misapplied. Same engine rules: no AI decides this." |
+| **Visual editor** | Switch to **Visual editor**, type a fraction and an integral, show *Checked as: int(x^2) dx*. | "Or write real maths. It's translated into the same text, and the server checks it again." |
+| **Missing + C** | *Missing + C* example → *Unfinished*. | "Every step is right, but an indefinite integral needs + C, and StepCheck says so." |
+| **Handwriting** | Upload `examples/handwritten_samples/demo4_calculus.png`. | "Calculus handwriting goes through the same review step." |
+
 ## Backup cases
 
 - **Answer already complete, then a wrong step:** `2x + 5 = 15`, `2x = 10`, `x = 5`, `x = 10`. StepCheck recommends removing step 4.
 - **Unsupported input:** `x^3 = 8`, `x = 2`. The result is *Unsupported*, and no correction is offered.
+- **Undecided calculus:** `lim(x->0, 1/x)`, `oo`. A two-sided limit that doesn't exist is *Needs review*, not a guess.

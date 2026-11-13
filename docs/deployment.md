@@ -21,6 +21,8 @@ The backend runs on **Render** (a Python web service). The frontend runs on **Ve
    - **OpenRouter settings:** leave them blank until you have a key. Typed checking and corrections work without one.
 4. When the deploy finishes, open `https://<your-service>.onrender.com/api/v1/health`. It should return `{"status":"healthy",...}`.
 
+**Calculus worker.** The first calculus request starts a worker process that loads SymPy (about 60 MB measured on Windows, likely more on Linux, and a few seconds). The server starts it when it boots, so the free tier's 512 MB is enough for the API and one worker. `CALC_WORKERS` (default 1) and `CALC_JOB_TIMEOUT_SECONDS` (default 4) tune it. After a deploy, check Render's memory graph once after a few calculus requests.
+
 **Keep it to one process.** Verifications, rate limits and guided progress are stored in memory. Running several workers or instances would split them, and a request could reach a process that doesn't have the data.
 
 ## 2. Frontend on Vercel
@@ -63,6 +65,9 @@ Open the Vercel URL and check:
 - [ ] *Correct linear solution*: every step is green.
 - [ ] *Arithmetic slip*: step 3 is the first error and step 4 is downstream.
 - [ ] **Explain mistake** returns text. Its label says *template* until a key is set.
+- [ ] *Calculus → Product rule slip*: step 2 is the first error and **Explain mistake** names the product rule.
+- [ ] *Calculus → Missing + C*: the result is *Unfinished*.
+- [ ] **Visual editor** loads (a short wait the first time) and its steps check like typed ones.
 - [ ] **Guide me through it** reaches *Solved*, and **Show corrected solution** shows a re-checked answer.
 - [ ] Refresh the results page and the results are still there.
 - [ ] **Upload photo**: without a key, this shows a clear "AI unavailable" message. With a key, upload a sample from `examples/handwritten_samples/`.
