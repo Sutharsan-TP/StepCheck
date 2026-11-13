@@ -58,6 +58,9 @@ class StepOut(BaseModel):
     error: StepError | None
 
 
+Topic = Literal["ALGEBRA", "DERIVATIVE", "INTEGRAL", "DEFINITE_INTEGRAL", "LIMIT"]
+
+
 class TransitionOut(BaseModel):
     from_step: int
     to_step: int
@@ -68,11 +71,17 @@ class TransitionOut(BaseModel):
     matches_original: bool | None
     lost_solutions: list[str]
     extraneous_solutions: list[str]
+    # Calculus: the value the step should have, the value it has, and a point where they differ.
+    expected_value_latex: str | None = None
+    found_value_latex: str | None = None
+    counterexample: str | None = None
+    note: str | None = None
 
 
 class VerifyResponse(BaseModel):
     request_id: str | None
     verification_id: str
+    topic: Topic = "ALGEBRA"
     overall_status: OverallStatus
     first_error_step: int | None
     complete_answer_step: int | None
@@ -87,6 +96,11 @@ class VerifyResponse(BaseModel):
     solution_complete: bool | None
     missing_solutions: list[str] | None
     extraneous_solutions: list[str] | None
+    # Calculus: the engine's own final answer, and whether an indefinite integral lacks + C.
+    expected_answer: str | None = None
+    expected_answer_latex: str | None = None
+    missing_constant: bool | None = None
+    notes: list[str] = []
 
     @staticmethod
     def from_result(
@@ -129,6 +143,10 @@ class VerifyResponse(BaseModel):
                 matches_original=t.matches_original,
                 lost_solutions=strs(t.lost) or [],
                 extraneous_solutions=strs(t.extraneous) or [],
+                expected_value_latex=t.expected_value_latex,
+                found_value_latex=t.found_value_latex,
+                counterexample=t.counterexample,
+                note=t.note,
             )
             for t in result.transitions
         ]
@@ -136,6 +154,7 @@ class VerifyResponse(BaseModel):
         return VerifyResponse(
             request_id=request_id,
             verification_id=verification_id,
+            topic=result.topic,
             overall_status=result.overall_status,
             first_error_step=result.first_error_step,
             complete_answer_step=result.complete_answer_step,
@@ -150,4 +169,8 @@ class VerifyResponse(BaseModel):
             solution_complete=c.solution_complete,
             missing_solutions=strs(c.missing),
             extraneous_solutions=strs(c.extraneous),
+            expected_answer=result.expected_answer,
+            expected_answer_latex=result.expected_answer_latex,
+            missing_constant=result.missing_constant,
+            notes=result.notes,
         )

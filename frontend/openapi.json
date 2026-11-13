@@ -1249,12 +1249,45 @@
             ],
             "title": "Compared To Step"
           },
+          "counterexample": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Counterexample"
+          },
+          "expected_value_latex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Value Latex"
+          },
           "extraneous_solutions": {
             "items": {
               "type": "string"
             },
             "title": "Extraneous Solutions",
             "type": "array"
+          },
+          "found_value_latex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Found Value Latex"
           },
           "from_step": {
             "title": "From Step",
@@ -1288,6 +1321,17 @@
               }
             ],
             "title": "Matches Original"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
           },
           "reason_code": {
             "anyOf": [
@@ -1443,6 +1487,28 @@
               }
             ]
           },
+          "expected_answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Answer"
+          },
+          "expected_answer_latex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Answer Latex"
+          },
           "extraneous_solutions": {
             "anyOf": [
               {
@@ -1482,6 +1548,17 @@
             ],
             "title": "First Error Step"
           },
+          "missing_constant": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Missing Constant"
+          },
           "missing_solutions": {
             "anyOf": [
               {
@@ -1495,6 +1572,14 @@
               }
             ],
             "title": "Missing Solutions"
+          },
+          "notes": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
           },
           "overall_status": {
             "$ref": "#/components/schemas/OverallStatus"
@@ -1551,6 +1636,18 @@
                 "type": "null"
               }
             ]
+          },
+          "topic": {
+            "default": "ALGEBRA",
+            "enum": [
+              "ALGEBRA",
+              "DERIVATIVE",
+              "INTEGRAL",
+              "DEFINITE_INTEGRAL",
+              "LIMIT"
+            ],
+            "title": "Topic",
+            "type": "string"
           },
           "transitions": {
             "items": {

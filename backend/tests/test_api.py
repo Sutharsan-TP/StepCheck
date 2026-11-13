@@ -102,7 +102,7 @@ def test_internal_errors_hide_details(monkeypatch):
     def boom(_):
         raise RuntimeError("secret internal detail")
 
-    monkeypatch.setattr(verify_route, "verify_steps", boom)
+    monkeypatch.setattr(verify_route, "check_steps", boom)
     r = verify(["x = 1", "x = 1"])
     assert r.status_code == 500
     assert r.json() == {"error": {"code": "INTERNAL_ERROR", "message": "An unexpected error occurred."}}

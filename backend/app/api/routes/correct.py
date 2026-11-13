@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.dependencies import resolve_steps
 from app.api.schemas.correction import CorrectRequest, CorrectResponse
+from app.core.checking import is_calculus
 from app.core.correction_engine import InvalidProgress, correct_full, correct_guided
 from app.services import progress_token
 from app.utils.errors import APIError
@@ -12,6 +13,12 @@ router = APIRouter(tags=["correction"])
 @router.post("/correct", response_model=CorrectResponse)
 def correct(request: CorrectRequest) -> CorrectResponse:
     steps = resolve_steps(request.verification_id, request.steps)
+    if is_calculus(steps):
+        raise APIError(
+            422,
+            "CORRECTION_NOT_AVAILABLE",
+            "Guided and full corrections are not available for calculus yet. Use Explain mistake instead.",
+        )
     if request.mode == "FULL":
         return CorrectResponse.from_full(correct_full(steps))
 

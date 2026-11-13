@@ -438,8 +438,14 @@ export interface components {
         TransitionOut: {
             /** Compared To Step */
             compared_to_step: number | null;
+            /** Counterexample */
+            counterexample?: string | null;
+            /** Expected Value Latex */
+            expected_value_latex?: string | null;
             /** Extraneous Solutions */
             extraneous_solutions: string[];
+            /** Found Value Latex */
+            found_value_latex?: string | null;
             /** From Step */
             from_step: number;
             /** Locally Valid */
@@ -448,6 +454,8 @@ export interface components {
             lost_solutions: string[];
             /** Matches Original */
             matches_original: boolean | null;
+            /** Note */
+            note?: string | null;
             /** Reason Code */
             reason_code: string | null;
             status: components["schemas"]["StepStatus"];
@@ -493,6 +501,10 @@ export interface components {
             /** Correct Solution */
             correct_solution: string[] | null;
             correct_solution_set: components["schemas"]["SolutionSetOut"] | null;
+            /** Expected Answer */
+            expected_answer?: string | null;
+            /** Expected Answer Latex */
+            expected_answer_latex?: string | null;
             /** Extraneous Solutions */
             extraneous_solutions: string[] | null;
             /** Final Answer Correct */
@@ -500,8 +512,15 @@ export interface components {
             final_answer_status: components["schemas"]["FinalAnswerStatus"];
             /** First Error Step */
             first_error_step: number | null;
+            /** Missing Constant */
+            missing_constant?: boolean | null;
             /** Missing Solutions */
             missing_solutions: string[] | null;
+            /**
+             * Notes
+             * @default []
+             */
+            notes?: string[];
             overall_status: components["schemas"]["OverallStatus"];
             /** Request Id */
             request_id: string | null;
@@ -512,6 +531,12 @@ export interface components {
             /** Submitted Solution */
             submitted_solution: string[] | null;
             submitted_solution_set: components["schemas"]["SolutionSetOut"] | null;
+            /**
+             * Topic
+             * @default ALGEBRA
+             * @enum {string}
+             */
+            topic?: "ALGEBRA" | "DERIVATIVE" | "INTEGRAL" | "DEFINITE_INTEGRAL" | "LIMIT";
             /** Transitions */
             transitions: components["schemas"]["TransitionOut"][];
             /** Verification Id */

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import threading
+from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -12,6 +14,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.routes import correct, explain, transcribe, verify
 from app.config import settings
+from app.core.calculus.sandbox import get_sandbox
 from app.services.rate_limiter import rate_limit
 from app.utils.errors import APIError
 
@@ -29,8 +32,24 @@ def _error(
     return JSONResponse(status_code=status, content=body, headers=headers)
 
 
+@asynccontextmanager
+async def _lifespan(_: FastAPI):
+    # Start the calculus worker in the background so the first calculus request
+    # does not wait for SymPy to load; algebra requests never need it.
+    threading.Thread(target=_warm_sandbox, daemon=True).start()
+    yield
+    get_sandbox().shutdown()
+
+
+def _warm_sandbox() -> None:
+    try:
+        get_sandbox().warm_up()
+    except Exception:  # it will be started on first use instead
+        logger.exception("Calculus worker warm-up failed")
+
+
 def create_app() -> FastAPI:
-    app = FastAPI(title="StepCheck API", version="0.1.0")
+    app = FastAPI(title="StepCheck API", version="0.1.0", lifespan=_lifespan)
 
     app.add_middleware(
         CORSMiddleware,
