@@ -67,7 +67,7 @@ test("demo 3: lost quadratic root and incomplete answer", async ({ page }) => {
   await enterSteps(page, ["x^2 - 5x + 6 = 0", "(x - 2)(x - 3) = 0", "x - 2 = 0", "x = 2"]);
   expect(await statuses(page)).toEqual(["VALID", "VALID", "FIRST_INVALID", "DOWNSTREAM_DEPENDENT"]);
   await expect(page.getByText("Not complete")).toBeVisible();
-  await expect(page.getByText("Missing")).toBeVisible();
+  await expect(page.getByText("Missing", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: /Show corrected solution/ }).click();
   await expect(page.getByText("Dropped a factor.")).toBeVisible();
   await expect(page.locator('li[data-source="CORRECTED"]').getByRole("math", { name: "x - 2 = 0 or x - 3 = 0" })).toBeVisible();

@@ -17,8 +17,10 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 0,
-  timeout: 60_000,
-  expect: { timeout: 15_000 },
+  // Generous: `next dev` compiles pages on first visit and the machine may be busy.
+  timeout: 120_000,
+  expect: { timeout: 45_000 },
+  globalSetup: "./e2e/global-setup.ts",
   reporter: [["list"]],
   use: {
     baseURL: `http://127.0.0.1:${FRONTEND_PORT}`,
