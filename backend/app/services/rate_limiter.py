@@ -53,9 +53,9 @@ limiters: dict[str, TokenBucketLimiter] = {
 
 def client_key(request: Request) -> str:
     if settings.trust_proxy:
-        forwarded = request.headers.get("x-forwarded-for", "")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
+        hops = [h.strip() for h in request.headers.get("x-forwarded-for", "").split(",") if h.strip()]
+        if hops:
+            return hops[-min(settings.trusted_proxy_hops, len(hops))]
     return request.client.host if request.client else "unknown"
 
 

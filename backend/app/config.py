@@ -21,6 +21,8 @@ class Settings:
     cors_origins: list[str] = field(
         default_factory=lambda: _csv("CORS_ORIGINS", "http://localhost:3000")
     )
+    # Optional regex for extra origins, e.g. Vercel preview deployments.
+    cors_origin_regex: str | None = os.getenv("CORS_ORIGIN_REGEX") or None
     max_steps: int = int(os.getenv("MAX_STEPS", "30"))
     # Signs guided-correction progress tokens. If unset, a random per-process secret
     # is used, so tokens (like stored verifications) do not survive a restart.
@@ -38,6 +40,10 @@ class Settings:
     )
     # Only behind a trusted reverse proxy (e.g. Render): use X-Forwarded-For for client IPs.
     trust_proxy: bool = os.getenv("TRUST_PROXY", "false").lower() in ("1", "true", "yes")
+    # Number of trusted proxies in front of the app. Each appends one X-Forwarded-For entry,
+    # so the client address is this many entries from the right; anything further left
+    # was sent by the client and could be spoofed.
+    trusted_proxy_hops: int = max(1, int(os.getenv("TRUSTED_PROXY_HOPS", "1")))
     # Local demos / end-to-end tests only: answer AI requests with a deterministic offline stub.
     stub_ai: bool = os.getenv("STEPCHECK_STUB_AI", "false").lower() in ("1", "true", "yes")
     # OpenRouter. Model names are configuration only; none are hardcoded or assumed

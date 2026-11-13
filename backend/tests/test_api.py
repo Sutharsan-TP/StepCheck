@@ -120,3 +120,24 @@ def test_cors_allows_configured_origin_only():
         headers={"Origin": "https://evil.example", "Access-Control-Request-Method": "POST"},
     )
     assert "access-control-allow-origin" not in bad.headers
+
+
+def test_cors_origin_regex_allows_matching_preview_origins(monkeypatch):
+    import dataclasses
+
+    from app import main
+
+    monkeypatch.setattr(
+        main,
+        "settings",
+        dataclasses.replace(main.settings, cors_origin_regex=r"https://stepcheck-[a-z0-9-]+\.vercel\.app"),
+    )
+    preview = TestClient(main.create_app())
+
+    def allowed(origin: str) -> str | None:
+        r = preview.options("/api/v1/verify", headers={"Origin": origin, "Access-Control-Request-Method": "POST"})
+        return r.headers.get("access-control-allow-origin")
+
+    assert allowed("https://stepcheck-git-main-team.vercel.app") == "https://stepcheck-git-main-team.vercel.app"
+    assert allowed("http://localhost:3000") == "http://localhost:3000"
+    assert allowed("https://stepcheck-x.vercel.app.evil.example") is None
