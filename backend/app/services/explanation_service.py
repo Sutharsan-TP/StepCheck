@@ -208,7 +208,8 @@ def _calculus_diagnosis(steps: list[str], result: VerificationResult) -> CalcDia
 
     n = result.first_error_step
     wrong = result.steps[n - 1].analysis.statement
-    if n == 1:
+    # The problem line has no earlier step to compare with (lines before it only define functions).
+    if n == 1 or result.transitions[n - 2].compared_to_step is None:
         anchor_text = to_text(wrong.links[0])
     else:
         transition = result.transitions[n - 2]

@@ -75,6 +75,7 @@ _GRAMMAR = r"""
     ?jatom: VAR                                         -> var
         | CONST                                         -> const
         | NAME                                          -> name
+        | NAME LPAR sum RPAR                            -> call
         | LPAR sum RPAR                                 -> paren
         | FUNC LPAR sum RPAR                            -> func
         | FUNC CARET NUMBER LPAR sum RPAR               -> funcpow
@@ -114,7 +115,10 @@ _GRAMMAR = r"""
 _PARSER = Lark(_GRAMMAR, parser="lalr", lexer="basic", maybe_placeholders=False)
 
 _ALLOWED_CHARS = re.compile(r"^[0-9A-Za-z +\-*/^().,=\[\]>]*$")
-_TOPIC_HINT = re.compile(r"d/dx|∫|\bint\s*[\[(]|\bint\b.*\bdx\b|\blim\s*\(")
+_TOPIC_HINT = re.compile(r"d/dx|∫|\bint\s*[\[(]|\bint\b.*\bdx\b|\blim\s*\(|\b[fgh]['′]\s*\(")
+_DEFINITION = re.compile(r"^\s*([fgh])\s*\(\s*x\s*\)\s*=\s*(.+?)\s*$")
+_FUNCTION_NAMES = "fgh"
+MAX_DEFINITIONS = 3
 _OPERATOR_KINDS = {"deriv": Topic.DERIVATIVE, "integral": Topic.INTEGRAL, "defint": Topic.DEFINITE_INTEGRAL, "limit": Topic.LIMIT}
 
 _FUNCTIONS = {
@@ -152,11 +156,12 @@ class CalcStatement:
     """One step: a chain of expressions that should all be equal."""
 
     text: str
-    links: list[Node] = field(default_factory=list)
+    links: list[Node] = field(default_factory=list)  # defined functions expanded: what the engine checks
+    shown: list[Node] = field(default_factory=list)  # as written, e.g. f(x): what the student sees
 
     @property
     def latex(self) -> str:
-        return " = ".join(to_latex(n) for n in self.links)
+        return " = ".join(to_latex(n) for n in (self.shown or self.links))
 
     @property
     def topic(self) -> Topic | None:
@@ -210,9 +215,14 @@ def preprocess_calculus(raw: str) -> str:
 # ---------------------------------------------------------------------- parsing
 
 
-def parse_calculus(raw: str) -> CalcStatement:
-    """Parse one calculus step into a validated IR. Raises MathInputError on any problem."""
+def parse_calculus(raw: str, defs: dict[str, Node] | None = None) -> CalcStatement:
+    """Parse one calculus step into a validated IR. Raises MathInputError on any problem.
+
+    ``defs`` maps a defined function name (f, g, h) to its body, already expanded; calls to it are
+    expanded in ``links`` and kept as written in ``shown``.
+    """
     text = preprocess_calculus(raw)
+    text = re.sub(r"\b([fgh])['′]\s*\(\s*x\s*\)", r"d/dx(\1(x))", text)
     if not _ALLOWED_CHARS.match(text):
         bad = sorted({ch for ch in text if not _ALLOWED_CHARS.match(ch)})
         raise MathInputError(
@@ -225,9 +235,12 @@ def parse_calculus(raw: str) -> CalcStatement:
     except UnexpectedInput as exc:
         raise _syntax_error(exc) from None
 
-    counter = _Counter()
-    links = [_to_ir(child, counter, 1) for child in tree.children if not isinstance(child, Token)]
-    statement = CalcStatement(text=text, links=links)
+    counter = _Counter(defs or {})
+    shown = [_to_ir(child, counter, 1) for child in tree.children if not isinstance(child, Token)]
+    links = [_expand(n, counter.defs) for n in shown]
+    if _count(links) > MAX_NODES:
+        raise MathInputError(ErrorCode.TOO_COMPLEX, "The expression is too long to verify.")
+    statement = CalcStatement(text=text, links=links, shown=shown)
     for link in links:
         _validate(link, inside_bound=False)
     statement.expressions()  # build once so value errors (e.g. division by zero) surface now
@@ -256,7 +269,8 @@ def _syntax_error(exc: UnexpectedInput) -> MathInputError:
 
 
 class _Counter:
-    def __init__(self) -> None:
+    def __init__(self, defs: dict[str, Node] | None = None) -> None:
+        self.defs = defs or {}
         self.nodes = 0
         self.operators = 0
 
@@ -299,6 +313,15 @@ def _to_ir(tree: Tree, counter: _Counter, depth: int) -> Node:
         return Node("const", value=str(kids[0]))
     if kind == "name":
         raise _identifier_error(str(kids[0]))
+    if kind == "call":
+        name = str(kids[0])
+        if name not in counter.defs:
+            if name in _FUNCTION_NAMES and len(name) == 1:
+                raise MathInputError(
+                    ErrorCode.AMBIGUOUS_EXPRESSION, f"{name}(...) is not defined. Add a first step such as {name}(x) = x^2 + 1."
+                )
+            raise _identifier_error(name)
+        return Node("call", sub, value=name)
     if kind in ("paren", "sqrt") or kind in _UNARY:
         return Node(kind, sub)
     if kind == "div" and sub[1].kind == "imul":
@@ -332,6 +355,54 @@ def _to_ir(tree: Tree, counter: _Counter, depth: int) -> Node:
             return Node("limit", sub)
         return Node(kind, sub)
     raise MathInputError(ErrorCode.SYNTAX_ERROR, "The expression could not be read.")
+
+
+def _count(nodes: list[Node]) -> int:
+    return sum(1 + _count(n.children) for n in nodes)
+
+
+def _substitute(node: Node, replacement: Node) -> Node:
+    if node.kind == "var":
+        return Node("paren", [replacement])
+    return Node(node.kind, [_substitute(c, replacement) for c in node.children], node.value)
+
+
+def _expand(node: Node, defs: dict[str, Node]) -> Node:
+    """Replace every call f(arg) by the body of f with x := arg."""
+    children = [_expand(c, defs) for c in node.children]
+    if node.kind == "call":
+        return Node("paren", [_substitute(defs[node.value or ""], children[0])])
+    return Node(node.kind, children, node.value)
+
+
+def parse_definition(raw: str, defs: dict[str, Node]) -> tuple[str, CalcStatement] | None:
+    """``f(x) = x^2 + 1`` -> ("f", statement of the body); None if the line is not a plain definition."""
+    match = _DEFINITION.match(preprocess_calculus(raw))
+    if match is None or len(defs) >= MAX_DEFINITIONS:
+        return None
+    name, body = match.group(1), match.group(2)
+    if name in defs or "=" in body:
+        return None
+    try:
+        statement = parse_calculus(body, defs)
+    except MathInputError:
+        return None
+    if len(statement.links) != 1 or statement.topic is not None or statement.has_constant:
+        return None
+    return name, statement
+
+
+def split_definitions(steps: list[str]) -> tuple[list[tuple[str, CalcStatement]], dict[str, Node]]:
+    """Leading ``f(x) = ...`` lines, and the (expanded) bodies they define."""
+    found: list[tuple[str, CalcStatement]] = []
+    defs: dict[str, Node] = {}
+    for raw in steps:
+        parsed = parse_definition(raw, defs)
+        if parsed is None:
+            break
+        found.append(parsed)
+        defs[parsed[0]] = parsed[1].links[0]
+    return found, defs
 
 
 def _power_nesting(node: Node) -> int:
@@ -459,6 +530,8 @@ def to_latex(node: Node) -> str:
         return node.value or ""
     if k == "var":
         return "x"
+    if k == "call":
+        return rf"{node.value}\left({to_latex(c[0].unwrap())}\right)"
     if k == "const":
         return _CONST_LATEX[node.value]
     if k == "paren":
@@ -517,6 +590,8 @@ def to_text(node: Node) -> str:
         return node.value or ""
     if k == "var":
         return "x"
+    if k == "call":
+        return f"{node.value}({to_text(c[0].unwrap())})"
     if k == "paren":
         return f"({to_text(c[0])})"
     if k == "add":

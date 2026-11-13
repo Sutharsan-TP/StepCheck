@@ -15,7 +15,16 @@ import logging
 import time
 
 from app.core.calculus.calc_equivalence import Answer, Outcome, Verdict, mode_for
-from app.core.calculus.calc_parser import CalcStatement, Topic, guess_topic, parse_calculus, to_text
+from app.core.calculus.calc_parser import (
+    CalcStatement,
+    Topic,
+    guess_topic,
+    parse_calculus,
+    split_definitions,
+    to_latex,
+    to_text,
+)
+from app.core.equation_parser import Node
 from app.core.calculus.sandbox import Sandbox, SandboxFailure, SandboxTimeout, get_sandbox
 from app.core.types import (
     CompletenessResult,
@@ -35,13 +44,13 @@ logger = logging.getLogger("stepcheck.calculus")
 REQUEST_BUDGET_SECONDS = 15.0
 
 
-def analyze_calculus_step(index: int, raw: str) -> StepAnalysis:
+def analyze_calculus_step(index: int, raw: str, defs: dict[str, Node] | None = None) -> StepAnalysis:
     analysis = StepAnalysis(index=index, raw=raw)
     try:
-        statement = parse_calculus(raw)
+        statement = parse_calculus(raw, defs)
         analysis.statement = statement
         analysis.latex = statement.latex
-        analysis.normalized = " = ".join(to_text(link) for link in statement.links)
+        analysis.normalized = " = ".join(to_text(link) for link in (statement.shown or statement.links))
         analysis.solved_form = statement.evaluated
     except MathInputError as exc:
         analysis.error = exc
@@ -101,7 +110,50 @@ def _check_links(checker: _Checker, anchor_text: str, links: list) -> tuple[Outc
 def verify_calculus(
     steps: list[str], sandbox: Sandbox | None = None, budget: float = REQUEST_BUDGET_SECONDS
 ) -> VerificationResult:
-    analyses = [analyze_calculus_step(i + 1, s) for i, s in enumerate(steps)]
+    """Check a solution. Leading ``f(x) = ...`` lines define functions for the steps after them."""
+    definitions, defs = split_definitions(steps)
+    k = len(definitions)
+    result = _verify_steps(steps[k:], defs, k, sandbox, budget)
+    if k:
+        _shift(result, definitions, steps[:k])
+    return result
+
+
+def _shift(result: VerificationResult, definitions: list, raws: list[str]) -> None:
+    """Renumber a result for the steps after k definition lines, and put those lines in front as VALID."""
+    k = len(definitions)
+    for s in result.steps:
+        s.step += k
+        s.analysis.index += k
+    for t in result.transitions:
+        t.from_step += k
+        t.to_step += k
+        if t.compared_to_step is not None:
+            t.compared_to_step += k
+    if result.first_error_step is not None:
+        result.first_error_step += k
+    if result.complete_answer_step is not None:
+        result.complete_answer_step += k
+    steps, transitions = [], []
+    for j, ((name, body), raw) in enumerate(zip(definitions, raws)):
+        analysis = StepAnalysis(index=j + 1, raw=raw, solved_form=True)
+        analysis.latex = rf"{name}\left(x\right) = {to_latex((body.shown or body.links)[0])}"
+        analysis.normalized = f"{name}(x) = {to_text((body.shown or body.links)[0])}"
+        steps.append(StepResult(j + 1, raw, StepStatus.VALID, analysis))
+        transitions.append(
+            TransitionResult(
+                from_step=j + 1, to_step=j + 2, status=StepStatus.VALID, reason_code=None,
+                compared_to_step=None, locally_valid=None, matches_original=None,
+            )
+        )
+    result.steps[:0] = steps
+    result.transitions[:0] = transitions
+
+
+def _verify_steps(
+    steps: list[str], defs: dict[str, Node], offset: int, sandbox: Sandbox | None, budget: float
+) -> VerificationResult:
+    analyses = [analyze_calculus_step(i + 1, s, defs) for i, s in enumerate(steps)]
     original = analyses[0]
     if original.ok and original.statement.topic is None:
         original.error = MathInputError(
@@ -177,7 +229,7 @@ def verify_calculus(
             status, reason = StepStatus.VALID, None
             anchor_text, last_verified = new_anchor, i
             if outcome.note:
-                notes.append(f"Step {i + 1}: {outcome.note}.")
+                notes.append(f"Step {i + 1 + offset}: {outcome.note}.")
         elif outcome.verdict is Verdict.UNEQUAL and not bridged:
             status, reason = StepStatus.FIRST_INVALID, outcome.reason
             first_error = i + 1
