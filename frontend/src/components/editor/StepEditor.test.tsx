@@ -50,6 +50,32 @@ describe("StepEditor", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
+  it("types into the focused step with the keypad, caret inside the template", async () => {
+    const user = userEvent.setup();
+    render(<StepEditor onSubmit={vi.fn()} showExamples={false} />);
+    await user.click(screen.getByLabelText("Problem"));
+    await user.click(screen.getByRole("tab", { name: "Calculus" }));
+    await user.click(screen.getByRole("button", { name: "derivative" }));
+    await user.keyboard("x^3");
+    expect(screen.getByLabelText("Problem")).toHaveValue("d/dx(x^3)");
+    expect(screen.getByLabelText("Problem")).toHaveFocus();
+    expect(screen.getByText("Typing into: Problem")).toBeInTheDocument();
+
+    await user.click(screen.getByLabelText("Step 2"));
+    await user.click(screen.getByRole("tab", { name: "Basic" }));
+    await user.click(screen.getByRole("button", { name: "3" }));
+    await user.click(screen.getByRole("button", { name: "x" }));
+    await user.click(screen.getByRole("button", { name: "squared" }));
+    expect(screen.getByLabelText("Step 2")).toHaveValue("3x^2");
+  });
+
+  it("loads a calculus example", async () => {
+    const user = userEvent.setup();
+    render(<StepEditor onSubmit={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: "Missing + C" }));
+    expect(screen.getByLabelText("Problem")).toHaveValue("int(2x) dx");
+  });
+
   it("loads an example", async () => {
     const user = userEvent.setup();
     render(<StepEditor onSubmit={vi.fn()} />);

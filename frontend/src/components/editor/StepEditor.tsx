@@ -1,13 +1,16 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Plus, Sparkles, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { ArrowDown, ArrowUp, Calculator, Plus, Sparkles, Trash2 } from "lucide-react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 import { MathText } from "@/components/math/MathText";
 import { Button } from "@/components/ui/button";
 import { EXAMPLES } from "@/lib/examples";
+import { applyKey, type Key } from "@/lib/keypad";
 import { textToLatex } from "@/lib/math-renderer";
 import { cn, MAX_STEP_LENGTH, MAX_STEPS, MIN_STEPS } from "@/lib/utils";
+
+import { MathKeypad } from "./MathKeypad";
 
 export type Row = { id: string; text: string };
 
@@ -20,6 +23,9 @@ export function stepProblems(rows: Row[]): string | null {
   if (rows.some((r) => r.text.length > MAX_STEP_LENGTH)) return `Each step can be at most ${MAX_STEP_LENGTH} characters.`;
   return null;
 }
+
+const stepLabel = (index: number) => (index === 0 ? "Problem" : `Step ${index + 1}`);
+const GROUPS = ["Algebra", "Calculus"] as const;
 
 export function StepEditor({
   initialSteps,
@@ -36,7 +42,21 @@ export function StepEditor({
 }) {
   const [rows, setRows] = useState<Row[]>(() => makeRows(initialSteps?.length ? initialSteps : ["", ""]));
   const [touched, setTouched] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [keypadOpen, setKeypadOpen] = useState(true);
+  const inputs = useRef(new Map<string, HTMLInputElement>());
+  const pendingCaret = useRef<{ id: string; caret: number } | null>(null);
   const problem = stepProblems(rows);
+
+  // After a keypad edit, put focus and the caret back where the key left them.
+  useLayoutEffect(() => {
+    const pending = pendingCaret.current;
+    if (!pending) return;
+    pendingCaret.current = null;
+    const input = inputs.current.get(pending.id);
+    input?.focus();
+    input?.setSelectionRange(pending.caret, pending.caret);
+  });
 
   const update = (id: string, text: string) => setRows((rs) => rs.map((r) => (r.id === id ? { ...r, text } : r)));
   const remove = (id: string) => setRows((rs) => (rs.length > 1 ? rs.filter((r) => r.id !== id) : rs));
@@ -50,6 +70,19 @@ export function StepEditor({
       return copy;
     });
 
+  // The keypad types into the last focused step, or the last step if none has been focused.
+  const activeRow = rows.find((r) => r.id === activeId) ?? rows[rows.length - 1];
+  const targetIndex = rows.indexOf(activeRow);
+
+  function pressKey(key: Key) {
+    const input = inputs.current.get(activeRow.id);
+    const start = input?.selectionStart ?? activeRow.text.length;
+    const end = input?.selectionEnd ?? start;
+    const edit = applyKey(activeRow.text, start, end, key);
+    update(activeRow.id, edit.value);
+    pendingCaret.current = { id: activeRow.id, caret: edit.caret };
+  }
+
   function submit() {
     setTouched(true);
     if (problem) return;
@@ -59,20 +92,25 @@ export function StepEditor({
   return (
     <div className="flex flex-col gap-4">
       {showExamples && (
-        <div className="flex flex-wrap items-center gap-2 text-sm">
+        <div className="flex flex-col gap-2 text-sm">
           <span className="flex items-center gap-1 text-muted">
             <Sparkles className="size-4" aria-hidden /> Try an example:
           </span>
-          {EXAMPLES.map((ex) => (
-            <button
-              key={ex.id}
-              type="button"
-              onClick={() => setRows(makeRows(ex.steps))}
-              className="rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-strong hover:border-primary/50 hover:text-foreground"
-              title={ex.description}
-            >
-              {ex.title}
-            </button>
+          {GROUPS.map((group) => (
+            <div key={group} className="flex flex-wrap items-center gap-2">
+              <span className="w-16 text-xs font-medium text-muted">{group}</span>
+              {EXAMPLES.filter((ex) => ex.group === group).map((ex) => (
+                <button
+                  key={ex.id}
+                  type="button"
+                  onClick={() => setRows(makeRows(ex.steps))}
+                  className="rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-strong hover:border-primary/50 hover:text-foreground"
+                  title={ex.description}
+                >
+                  {ex.title}
+                </button>
+              ))}
+            </div>
           ))}
         </div>
       )}
@@ -83,24 +121,28 @@ export function StepEditor({
           return (
             <li key={row.id} className="rounded-lg border border-border bg-card p-3">
               <div className="flex items-start gap-3">
-                <span className="mt-2 w-14 shrink-0 text-xs font-medium text-muted">
-                  {index === 0 ? "Problem" : `Step ${index + 1}`}
-                </span>
+                <span className="mt-2 w-14 shrink-0 text-xs font-medium text-muted">{stepLabel(index)}</span>
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
                   <input
+                    ref={(el) => {
+                      if (el) inputs.current.set(row.id, el);
+                      else inputs.current.delete(row.id);
+                    }}
                     value={row.text}
                     onChange={(e) => update(row.id, e.target.value)}
+                    onFocus={() => setActiveId(row.id)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
                         if (index === rows.length - 1) add();
                       }
                     }}
-                    placeholder={index === 0 ? "e.g. 2x + 5 = 15" : "e.g. 2x = 10"}
-                    aria-label={index === 0 ? "Problem" : `Step ${index + 1}`}
+                    placeholder={index === 0 ? "e.g. 2x + 5 = 15 or d/dx(x^2 sin(x))" : "e.g. 2x = 10"}
+                    aria-label={stepLabel(index)}
                     aria-invalid={tooLong}
                     spellCheck={false}
                     autoComplete="off"
+                    autoCapitalize="off"
                     className={cn(
                       "h-10 w-full rounded-md border bg-background px-3 font-mono text-sm text-foreground",
                       "focus:outline-2 focus:outline-primary",
@@ -135,6 +177,19 @@ export function StepEditor({
         })}
       </ol>
 
+      <div className="sticky bottom-2 z-10 flex flex-col gap-2 sm:static">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="self-start"
+          aria-expanded={keypadOpen}
+          onClick={() => setKeypadOpen((open) => !open)}
+        >
+          <Calculator className="size-4" aria-hidden /> {keypadOpen ? "Hide keypad" : "Show keypad"}
+        </Button>
+        {keypadOpen && <MathKeypad onKey={pressKey} target={stepLabel(targetIndex)} />}
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button variant="secondary" onClick={add} disabled={rows.length >= MAX_STEPS}>
           <Plus className="size-4" aria-hidden /> Add step
@@ -148,10 +203,16 @@ export function StepEditor({
           {problem}
         </p>
       )}
-      <p className="text-xs text-muted">
-        Write powers as <code>x^2</code>, roots as <code>sqrt(13)</code>, use <code>±</code> or <code>+/-</code>, and{" "}
-        <code>or</code> between answers (e.g. <code>x = 2 or x = 3</code>).
-      </p>
+      <div className="flex flex-col gap-1 text-xs text-muted">
+        <p>
+          Write powers as <code>x^2</code>, roots as <code>sqrt(13)</code>, use <code>±</code> or <code>+/-</code>, and{" "}
+          <code>or</code> between answers (e.g. <code>x = 2 or x = 3</code>).
+        </p>
+        <p>
+          Calculus: <code>d/dx(x^2 sin(x))</code>, <code>int(x^2) dx</code>, <code>int[0, 2](x^2) dx</code>,{" "}
+          <code>lim(x-&gt;0, sin(x)/x)</code>, <code>[x^3/3][0, 2]</code>, and <code>+ C</code> on indefinite integrals.
+        </p>
+      </div>
     </div>
   );
 }
