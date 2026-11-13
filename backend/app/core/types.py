@@ -124,6 +124,11 @@ class TransitionResult:
     matches_original: bool | None
     lost: tuple[sp.Expr, ...] = ()
     extraneous: tuple[sp.Expr, ...] = ()
+    # Calculus only: what the step should equal, what it does equal, and where they differ.
+    expected_value_latex: str | None = None
+    found_value_latex: str | None = None
+    counterexample: str | None = None
+    note: str | None = None
 
 
 @dataclass
@@ -147,3 +152,7 @@ class VerificationResult:
     completeness: CompletenessResult
     complete_answer_step: int | None = None  # earliest step stating the full answer (all prior valid)
     notes: list[str] = field(default_factory=list)
+    topic: str = "ALGEBRA"  # or a calculus Topic value
+    expected_answer: str | None = None  # calculus: the engine's own final answer
+    expected_answer_latex: str | None = None
+    missing_constant: bool | None = None  # indefinite integrals: final answer lacks + C
