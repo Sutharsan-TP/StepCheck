@@ -30,6 +30,13 @@ export const EXAMPLES: Example[] = [
     steps: ["d/dx(x^2 sin(x))", "d/dx(x^2) sin(x) + x^2 d/dx(sin(x))", "2x sin(x) + x^2 cos(x)"],
   },
   {
+    id: "defined-function",
+    group: "Calculus",
+    title: "Defined function",
+    description: "f(x) is defined on the first line, then differentiated. The last step drops the 2.",
+    steps: ["f(x) = x^2 + 2x + 3", "d/dx(f(x))", "2x + 3"],
+  },
+  {
     id: "product-rule-slip",
     group: "Calculus",
     title: "Product rule slip",

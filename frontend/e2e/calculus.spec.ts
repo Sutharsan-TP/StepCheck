@@ -176,3 +176,24 @@ test("phone layout: keypad and calculus results fit without horizontal scroll", 
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await page.screenshot({ path: `${SHOTS}/mobile-calculus-results.png`, fullPage: true });
 });
+
+test("a function defined on the first line can be differentiated, and steps can be inserted anywhere", async ({ page }) => {
+  await loadExample(page, "Defined function");
+  await expect(page.getByRole("heading", { name: "Mistake found" })).toBeVisible();
+  expect(await statuses(page)).toEqual(["VALID", "VALID", "FIRST_INVALID"]);
+
+  await page.goto("/workspace");
+  await page.evaluate(() => {
+    sessionStorage.clear(); // the workspace remembers the previous problem
+    localStorage.clear();
+  });
+  await page.reload();
+  await page.getByLabel("Problem", { exact: true }).fill("f(x) = x^2");
+  await page.getByLabel("Step 2", { exact: true }).fill("2x");
+  await page.getByRole("button", { name: "Add step below step 1" }).click();
+  await expect(page.getByLabel("Step 2", { exact: true })).toBeFocused();
+  await page.keyboard.type("d/dx(f(x))");
+  await page.getByRole("button", { name: "Check my steps" }).click();
+  await expect(page.getByRole("heading", { name: "Correct" })).toBeVisible();
+  expect(await statuses(page)).toEqual(["VALID", "VALID", "VALID"]);
+});
