@@ -7,10 +7,18 @@ import { MathText } from "@/components/math/MathText";
 import { Button } from "@/components/ui/button";
 import { EXAMPLES } from "@/lib/examples";
 import { applyKey, type Key } from "@/lib/keypad";
+import { latexToText } from "@/lib/latex-to-text";
 import { textToLatex } from "@/lib/math-renderer";
+import { useInputMode, type InputMode } from "@/lib/preferences";
 import { cn, MAX_STEP_LENGTH, MAX_STEPS, MIN_STEPS } from "@/lib/utils";
 
 import { MathKeypad } from "./MathKeypad";
+import { VisualMathField } from "./VisualMathField";
+
+const MODES: { value: InputMode; label: string }[] = [
+  { value: "keypad", label: "Keypad" },
+  { value: "visual", label: "Visual editor" },
+];
 
 export type Row = { id: string; text: string };
 
@@ -44,9 +52,32 @@ export function StepEditor({
   const [touched, setTouched] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [keypadOpen, setKeypadOpen] = useState(true);
+  const [mode, setMode] = useInputMode();
+  // Steps the visual editor holds but StepCheck can't read yet, by row id, with the reason.
+  const [visualErrors, setVisualErrors] = useState<Record<string, string>>({});
   const inputs = useRef(new Map<string, HTMLInputElement>());
   const pendingCaret = useRef<{ id: string; caret: number } | null>(null);
-  const problem = stepProblems(rows);
+  const visual = mode === "visual";
+  // An unreadable visual step is empty in `rows`, so report it before "enter at least 2 steps".
+  const problem =
+    visual && Object.keys(visualErrors).length > 0
+      ? "Fix the steps marked in red before checking: StepCheck can't read them yet."
+      : stepProblems(rows);
+
+  function changeMode(next: InputMode) {
+    setVisualErrors({});
+    setMode(next);
+  }
+
+  function onVisualEdit(id: string, latex: string) {
+    const result = latexToText(latex);
+    setVisualErrors((errors) => {
+      const next = { ...errors };
+      delete next[id];
+      return result.ok ? next : { ...next, [id]: result.reason };
+    });
+    if (result.ok) update(id, result.text);
+  }
 
   // After a keypad edit, put focus and the caret back where the key left them.
   useLayoutEffect(() => {
@@ -115,6 +146,28 @@ export function StepEditor({
         </div>
       )}
 
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-muted" id="input-mode-label">
+          Enter maths with:
+        </span>
+        <div role="group" aria-labelledby="input-mode-label" className="inline-flex rounded-lg border border-border bg-muted-surface p-1">
+          {MODES.map((m) => (
+            <button
+              key={m.value}
+              type="button"
+              aria-pressed={mode === m.value}
+              onClick={() => changeMode(m.value)}
+              className={cn(
+                "rounded-md px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-primary",
+                mode === m.value ? "bg-card text-foreground shadow-sm" : "text-muted hover:text-foreground",
+              )}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <ol className="flex flex-col gap-2" aria-label="Solution steps">
         {rows.map((row, index) => {
           const tooLong = row.text.length > MAX_STEP_LENGTH;
@@ -123,34 +176,60 @@ export function StepEditor({
               <div className="flex items-start gap-3">
                 <span className="mt-2 w-14 shrink-0 text-xs font-medium text-muted">{stepLabel(index)}</span>
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
-                  <input
-                    ref={(el) => {
-                      if (el) inputs.current.set(row.id, el);
-                      else inputs.current.delete(row.id);
-                    }}
-                    value={row.text}
-                    onChange={(e) => update(row.id, e.target.value)}
-                    onFocus={() => setActiveId(row.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        if (index === rows.length - 1) add();
-                      }
-                    }}
-                    placeholder={index === 0 ? "e.g. 2x + 5 = 15 or d/dx(x^2 sin(x))" : "e.g. 2x = 10"}
-                    aria-label={stepLabel(index)}
-                    aria-invalid={tooLong}
-                    spellCheck={false}
-                    autoComplete="off"
-                    autoCapitalize="off"
-                    className={cn(
-                      "h-10 w-full rounded-md border bg-background px-3 font-mono text-sm text-foreground",
-                      "focus:outline-2 focus:outline-primary",
-                      tooLong ? "border-invalid" : "border-border",
-                    )}
-                  />
+                  {visual ? (
+                    <VisualMathField
+                      initialLatex={textToLatex(row.text)}
+                      label={stepLabel(index)}
+                      invalid={tooLong || Boolean(visualErrors[row.id])}
+                      onFocus={() => setActiveId(row.id)}
+                      onLatex={(latex) => onVisualEdit(row.id, latex)}
+                    />
+                  ) : (
+                    <input
+                      ref={(el) => {
+                        if (el) inputs.current.set(row.id, el);
+                        else inputs.current.delete(row.id);
+                      }}
+                      value={row.text}
+                      onChange={(e) => update(row.id, e.target.value)}
+                      onFocus={() => setActiveId(row.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          if (index === rows.length - 1) add();
+                        }
+                      }}
+                      placeholder={index === 0 ? "e.g. 2x + 5 = 15 or d/dx(x^2 sin(x))" : "e.g. 2x = 10"}
+                      aria-label={stepLabel(index)}
+                      aria-invalid={tooLong}
+                      spellCheck={false}
+                      autoComplete="off"
+                      autoCapitalize="off"
+                      className={cn(
+                        "h-10 w-full rounded-md border bg-background px-3 font-mono text-sm text-foreground",
+                        "focus:outline-2 focus:outline-primary",
+                        tooLong ? "border-invalid" : "border-border",
+                      )}
+                    />
+                  )}
                   <div className="flex min-h-6 items-center justify-between gap-2">
-                    {row.text.trim() ? (
+                    {visual ? (
+                      visualErrors[row.id] ? (
+                        <span role="alert" className="text-xs text-invalid">
+                          {visualErrors[row.id]}
+                        </span>
+                      ) : (
+                        <span className="min-w-0 truncate text-xs text-muted">
+                          {row.text.trim() ? (
+                            <>
+                              Checked as: <code>{row.text}</code>
+                            </>
+                          ) : (
+                            "Type with the keyboard icon or your own keyboard"
+                          )}
+                        </span>
+                      )
+                    ) : row.text.trim() ? (
                       <MathText latex={textToLatex(row.text)} className="min-w-0 overflow-x-auto text-foreground" />
                     ) : (
                       <span className="text-xs text-muted">Preview appears here</span>
@@ -177,18 +256,20 @@ export function StepEditor({
         })}
       </ol>
 
-      <div className="sticky bottom-2 z-10 flex flex-col gap-2 sm:static">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="self-start"
-          aria-expanded={keypadOpen}
-          onClick={() => setKeypadOpen((open) => !open)}
-        >
-          <Calculator className="size-4" aria-hidden /> {keypadOpen ? "Hide keypad" : "Show keypad"}
-        </Button>
-        {keypadOpen && <MathKeypad onKey={pressKey} target={stepLabel(targetIndex)} />}
-      </div>
+      {!visual && (
+        <div className="sticky bottom-2 z-10 flex flex-col gap-2 sm:static">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="self-start"
+            aria-expanded={keypadOpen}
+            onClick={() => setKeypadOpen((open) => !open)}
+          >
+            <Calculator className="size-4" aria-hidden /> {keypadOpen ? "Hide keypad" : "Show keypad"}
+          </Button>
+          {keypadOpen && <MathKeypad onKey={pressKey} target={stepLabel(targetIndex)} />}
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button variant="secondary" onClick={add} disabled={rows.length >= MAX_STEPS}>

@@ -88,3 +88,30 @@ body {
 .math .katex-error {
   color: var(--muted) !important;
 }
+
+/* Visual maths editor (MathLive). It sets its own colours for the on-screen keyboard from --hue. */
+.visual-math-field math-field {
+  display: block;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 1.1rem;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  --hue: 225;
+  --caret-color: var(--primary);
+  --selection-background-color: var(--primary-soft);
+  --placeholder-color: var(--muted);
+  --smart-fence-color: var(--muted);
+}
+
+.visual-math-field math-field:focus-within {
+  outline: 2px solid var(--primary);
+  outline-offset: 0;
+}
+
+.visual-math-field-invalid math-field {
+  border-color: var(--invalid);
+}

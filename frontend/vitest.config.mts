@@ -12,5 +12,7 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
     css: false,
+    // Typing into the editor renders KaTeX on every keystroke; test files also run in parallel.
+    testTimeout: 20_000,
   },
 });
