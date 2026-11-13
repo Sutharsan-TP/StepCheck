@@ -18,6 +18,7 @@ from app.api.schemas.transcription import (
     TranscribedStep,
     TranscriptionResponse,
 )
+from app.core.calculus.calc_parser import looks_like_calculus, parse_calculus
 from app.core.equation_parser import parse_statement
 from app.services.image_service import PreparedImage
 from app.services.openrouter_client import OpenRouterClient
@@ -35,6 +36,12 @@ Rules:
 - Each written line is one step. Keep the student's own form (e.g. keep "15 - 5"; do not write "10").
 - Use plain text with ^ for powers, * or implicit multiplication, / for division, sqrt(...) for roots,
   ± for plus-minus, and "or" between alternatives (e.g. "x = 2 or x = 3").
+- For calculus, write operators exactly like this: d/dx(f) for a derivative, int(f) dx for an indefinite
+  integral, int[a, b](f) dx for a definite integral from a to b, lim(x->a, f) for a limit,
+  [F][a, b] for an antiderivative evaluated between a and b, "+ C" for the constant of integration,
+  pi, e and oo (infinity). Functions are sin cos tan sec csc cot arcsin arccos arctan ln log exp abs and
+  always take brackets: sin(x), ln(x). Bracket fractions: (x + 1)/(x - 1). Keep the student's own
+  working; never evaluate an operator the student left unevaluated.
 - Also give a LaTeX version of each line.
 - confidence is your estimate (0 to 1) that the line is transcribed exactly.
 - If any symbol is unclear (e.g. 1 vs 7, x vs ×, 2 vs z, a faint minus sign), set needs_review to true,
@@ -68,6 +75,8 @@ def review_transcription(raw: ModelTranscription, image: PreparedImage) -> Trans
     if not lines:
         warnings.append("No mathematical steps were found in the image.")
 
+    # The problem line decides which parser reads the whole solution.
+    parse = parse_calculus if lines and looks_like_calculus(lines[0].expression) else parse_statement
     steps: list[TranscribedStep] = []
     for number, line in enumerate(lines, start=1):
         expression = line.expression.strip()
@@ -82,7 +91,7 @@ def review_transcription(raw: ModelTranscription, image: PreparedImage) -> Trans
             reasons.append(f"Longer than {MAX_STEP_LENGTH} characters.")
         else:
             try:
-                latex = parse_statement(expression).latex  # our own rendering of the exact text
+                latex = parse(expression).latex  # our own rendering of the exact text
             except MathInputError as exc:
                 parse_code = exc.code.value
                 reasons.append(f"StepCheck cannot read this line yet: {exc.message}")

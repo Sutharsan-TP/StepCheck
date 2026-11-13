@@ -162,3 +162,27 @@ def test_provider_errors_are_structured(override):
     override(ai_client(httpx.Response(429), httpx.Response(429)))
     r = client.post("/api/v1/transcribe", files={"file": ("work.png", png(), "image/png")})
     assert r.status_code == 429 and r.json()["error"]["code"] == "AI_RATE_LIMITED"
+
+
+def test_calculus_lines_are_checked_with_the_calculus_parser():
+    lines = ["d/dx(x^2 sin(x))", "d/dx(x^2) d/dx(sin(x))", "2x cos(x)", "sin x cos"]
+    reply = model_reply([step(i, e) for i, e in enumerate(lines, start=1)], question=lines[0])
+    result = run(ai_client(reply))
+    assert [s.needs_review for s in result.steps] == [False, False, False, True]
+    assert result.steps[0].latex == r"\frac{d}{dx}\left({x}^{2} \sin\left(x\right)\right)"  # the server's own LaTeX
+    assert result.steps[3].parse_error_code == "SYNTAX_ERROR"
+    assert result.status == "REVIEW_REQUIRED"
+
+
+def test_algebra_is_not_parsed_as_calculus():
+    result = run(ai_client(model_reply([step(1, "2x + 5 = 15"), step(2, "2x = d/dx(x)")])))
+    assert result.steps[0].needs_review is False
+    assert result.steps[1].parse_error_code is not None  # the equation parser rejects d/dx
+
+
+def test_prompt_teaches_the_calculus_syntax():
+    seen = []
+    run(ai_client(model_reply([step(1, "int(2x) dx"), step(2, "x^2 + C")], question="int(2x) dx"), seen=seen))
+    prompt = seen[0]["messages"][0]["content"]
+    for syntax in ("d/dx(f)", "int(f) dx", "int[a, b](f) dx", "lim(x->a, f)", "[F][a, b]", "+ C"):
+        assert syntax in prompt
