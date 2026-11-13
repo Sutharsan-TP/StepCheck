@@ -163,6 +163,16 @@ def test_structured_output_unsupported_retries_in_plain_json_mode():
     assert "JSON" in second["messages"][-1]["content"]
 
 
+def test_gemini_schema_rejection_also_falls_back_to_plain_json():
+    # Gemini's OpenAI-compatible endpoint rejects unsupported schema keywords like this.
+    rejection = [{"error": {"code": 400, "message": "Invalid JSON payload received. Unknown name "
+                            "\"additionalProperties\" at 'generation_config.response_schema': Cannot find field."}}]
+    rec = Recorder(httpx.Response(400, json=rejection), ok('{"answer": "plain"}'))
+    client, _ = make_client(rec)
+    assert call(client).answer == "plain"
+    assert "response_format" not in json.loads(rec.requests[1].content)
+
+
 def test_malformed_output_is_retried_once():
     rec = Recorder(ok("I think the answer is 42"), ok('{"answer": "42"}'))
     client, _ = make_client(rec)

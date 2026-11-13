@@ -189,7 +189,8 @@ class OpenRouterClient:
                     continue
                 if status in (401, 403):
                     raise APIError(503, "AI_UNAVAILABLE", "The AI service rejected the configured credentials.")
-                format_problem = self._mentions(resp, "response_format", "json_schema", "structured")
+                # Covers OpenRouter's wording and Gemini's ("... at 'generation_config.response_schema'").
+                format_problem = self._mentions(resp, "response_format", "schema", "structured")
                 if status == 400 and structured and format_problem:
                     structured = False  # model can't do strict schemas: ask for plain JSON instead
                     continue
